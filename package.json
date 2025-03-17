@@ -8,11 +8,12 @@
     "start": "node bin/server.js",
     "build": "node ace build",
     "dev": "node ace serve --hmr",
-    "test": "jest",
     "lint": "eslint .",
     "fix": "eslint --fix .",
     "typecheck": "tsc --noEmit",
-    "test:backend": "c8 --config .c8rc.json node ace test unit"
+    "test:frontend": "jest",
+    "test:backend": "c8 --config .c8rc.json node ace test unit",
+    "test": "npm run test:frontend && npm run test:backend"
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
