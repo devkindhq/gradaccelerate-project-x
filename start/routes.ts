@@ -9,7 +9,9 @@ router.get('/todos', ({ inertia }) => inertia.render('todos/empty'))
 // Notes routes
 router.get('/notes', [NotesController, 'index'])
 router.post('/notes', [NotesController, 'store'])
+router.get('/notes/:id', [NotesController, 'show'])
 router.put('/notes/:id', [NotesController, 'update'])
+router.patch('/notes/:id/pin', [NotesController, 'togglePin']) // New route for toggling pin status
 router.delete('/notes/:id', [NotesController, 'destroy'])
 
 // Projects routes
