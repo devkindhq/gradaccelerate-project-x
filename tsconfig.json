@@ -1,9 +1,15 @@
 {
   "extends": "@adonisjs/tsconfig/tsconfig.app.json",
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "#inertia/*": ["./inertia/*.js"]
+    },
     "rootDir": "./",
     "outDir": "./build",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": ["jest", "node"],
+    "lib": ["dom", "esnext"]
   },
   "exclude": ["./inertia/**/*", "node_modules", "build"]
 }
