@@ -79,15 +79,17 @@
     "@adonisjs/vite": "^4.0.0",
     "@inertiajs/react": "^2.0.5",
     "@vinejs/vine": "^3.0.0",
-    "better-sqlite3": "^11.8.1",
+    "better-sqlite3": "^11.9.1",
     "date-fns": "^4.1.0",
     "edge.js": "^6.2.1",
     "framer-motion": "^12.4.10",
     "lucide-react": "^0.479.0",
     "luxon": "^3.5.0",
+    "mysql2": "^3.13.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7"
   },
   "hotHook": {
     "boundaries": [
