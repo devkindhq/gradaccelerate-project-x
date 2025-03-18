@@ -1,6 +1,17 @@
 import { HttpContext } from '@adonisjs/core/http'
 import Note from '#models/note'
-import { marked } from 'marked'
+
+// Simpler approach for markdown - avoid async import which might cause issues
+let marked: any
+try {
+  // Static import with require to avoid any async loading issues
+  marked = require('marked').marked
+  console.log('Marked package loaded successfully')
+} catch (error) {
+  console.warn('Marked package not available. Markdown rendering disabled.', error)
+  // Create a simple fallback function that returns the original text
+  marked = (text: string) => text
+}
 
 export default class NotesController {
   /**
@@ -8,6 +19,7 @@ export default class NotesController {
    */
   async index({ request, response }: HttpContext) {
     try {
+      console.log('Notes index method called')
       const sortBy = request.input('sort_by', 'created_at')
       const order = request.input('order', 'desc')
       
@@ -32,13 +44,15 @@ export default class NotesController {
       
       // Combine the results
       const notes = [...pinnedNotes, ...unpinnedNotes]
+      console.log(`Found ${notes.length} notes`)
       
       return response.json(notes)
     } catch (error) {
       console.error('Error in notes index method:', error)
       return response.status(500).json({
         error: 'An error occurred while fetching notes',
-        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+        details: String(error),
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       })
     }
   }
@@ -73,16 +87,22 @@ export default class NotesController {
    */
   async show({ params, response }: HttpContext) {
     try {
+      console.log(`Fetching note with ID: ${params.id}`)
       const note = await Note.find(params.id)
       
       if (!note) {
+        console.log(`Note with ID ${params.id} not found`)
         return response.status(404).json({ message: 'Note not found' })
       }
+      
+      console.log(`Found note: ${note.title}`)
       
       // Parse markdown to HTML for frontend rendering
       if (note.content) {
         try {
+          console.log('Attempting to render markdown content')
           const renderedContent = marked(note.content)
+          console.log('Markdown rendered successfully')
           return response.json({ ...note.toJSON(), renderedHtml: renderedContent })
         } catch (markdownError) {
           console.error('Error parsing markdown:', markdownError)
@@ -96,7 +116,8 @@ export default class NotesController {
       console.error('Error in notes show method:', error)
       return response.status(500).json({
         error: 'An error occurred while fetching the note',
-        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+        details: String(error),
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       })
     }
   }
