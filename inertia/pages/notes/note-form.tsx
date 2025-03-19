@@ -1,5 +1,6 @@
 import type React from "react"
 import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
 
 interface NoteFormProps {
   data: {
@@ -13,6 +14,13 @@ interface NoteFormProps {
 }
 
 export default function NoteForm({ data, setData, submit, processing, handleKeyDown }: NoteFormProps) {
+  const [isMac, setIsMac] = useState(false)
+  
+  // Safely check for navigator after component mounts (client-side only)
+  useEffect(() => {
+    setIsMac(typeof navigator !== 'undefined' && navigator.platform?.includes('Mac'))
+  }, [])
+  
   return (
     <motion.div
       className="bg-[#2C2C2E] rounded-xl p-6 backdrop-blur-lg border border-[#3A3A3C]"
@@ -54,9 +62,9 @@ export default function NoteForm({ data, setData, submit, processing, handleKeyD
           {processing ? "Adding..." : "Add Note"}
         </motion.button>
         <p className="text-center text-sm text-[#98989D] mt-2">
-          Hit {navigator.platform?.includes("Mac") ? "⌘" : "Ctrl"} + Enter to add note
+          Hit {isMac ? "⌘" : "Ctrl"} + Enter to add note
         </p>
       </form>
     </motion.div>
   )
-} 
+}
