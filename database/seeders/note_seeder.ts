@@ -7,10 +7,12 @@ export default class NoteSeeder extends BaseSeeder {
       {
         title: 'First Note',
         content: 'This is the content of the first note.',
+        pinned: true,
       },
       {
         title: 'Second Note',
         content: 'This is the content of the second note.',
+        pinned: false,
       },
     ])
   }
