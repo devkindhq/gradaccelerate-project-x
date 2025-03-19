@@ -87,7 +87,8 @@
     "luxon": "^3.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7"
   },
   "hotHook": {
     "boundaries": [
