@@ -85,6 +85,7 @@
     "framer-motion": "^12.4.10",
     "lucide-react": "^0.479.0",
     "luxon": "^3.5.0",
+    "mysql2": "^3.13.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "reflect-metadata": "^0.2.2"
