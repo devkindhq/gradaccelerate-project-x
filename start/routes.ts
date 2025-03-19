@@ -2,34 +2,80 @@
 |--------------------------------------------------------------------------
 | Routes file
 |--------------------------------------------------------------------------
-|
-| The routes file is used for defining the HTTP routes.
-|
 */
 
 const NotesController = () => import('#controllers/notes_controller')
 const ProjectsController = () => import('#controllers/projects_controller')
+
 import router from '@adonisjs/core/services/router'
 import db from '@adonisjs/lucid/services/db'
-// import { schema } from '@adonisjs/lucid/build/src/Schema'
-
 import Note from '#models/note'
+import type { HttpContext } from '@adonisjs/core/http'
 
+/* ------------------------------
+| Inertia Page Routes
+|------------------------------ */
+
+// Home and Misc
 router.get('/', ({ inertia }) => inertia.render('home'))
 router.get('/todos', ({ inertia }) => inertia.render('todos/empty'))
-router.get('/notes', ({ inertia }) => inertia.render('notes/index'))
-router.get('/projects', ({ inertia }) => inertia.render('projects/index'))
-
-// Add API tester route
 router.get('/api-tester', ({ inertia }) => inertia.render('api_tester'))
 
-// Diagnostic routes for debugging
+// Notes UI Pages
+router.get('/notes', ({ inertia }) => inertia.render('notes/index'))
+
+/* ------------------------------
+| Projects UI Pages - Update order to fix route conflicts
+|------------------------------ */
+router.get('/projects/create', ({ inertia }) => inertia.render('projects/create'))
+
+router.get('/projects/:id/edit', async ({ params, inertia }) => {
+  try {
+    const { default: ProjectsControllerClass } = await ProjectsController()
+    const projectsController = new ProjectsControllerClass()
+    
+    // Create a minimal context object that matches the structure ProjectController expects
+    const ctx = {
+      params: { id: params.id },
+      request: { input: () => undefined }
+    } as unknown as HttpContext
+    
+    const project = await projectsController.show(ctx)
+    return inertia.render('projects/edit', { project, params })
+  } catch (error) {
+    console.error('Error loading project for edit:', error)
+    return inertia.render('projects/index')
+  }
+})
+
+router.get('/projects/:id', async ({ params, inertia }) => {
+  try {
+    const { default: ProjectsControllerClass } = await ProjectsController()
+    const projectsController = new ProjectsControllerClass()
+    
+    // Create a minimal context object that matches the structure ProjectController expects
+    const ctx = {
+      params: { id: params.id },
+      request: { input: () => undefined }
+    } as unknown as HttpContext
+    
+    const project = await projectsController.show(ctx)
+    return inertia.render('projects/show', { project, params })
+  } catch (error) {
+    console.error('Error loading project for view:', error)
+    return inertia.render('projects/index')
+  }
+})
+
+router.get('/projects', ({ inertia }) => inertia.render('projects/index'))
+
+/* ------------------------------
+| Diagnostic Routes
+|------------------------------ */
+
 router.get('/debug/db-check', async ({ response }) => {
   try {
-    // Check if we can connect to the database
     await db.connection().rawQuery('SELECT 1')
-    
-    // Check if notes table exists
     const hasNotesTable = await db.connection().schema.hasTable('notes')
     
     return response.json({
@@ -69,15 +115,11 @@ router.get('/debug/notes-count', async ({ response }) => {
   }
 })
 
-// Add diagnostic endpoint for Notes API
 router.get('/debug/notes-api', async ({ response }) => {
   try {
-    // Verify the controller can be loaded
     const controller = await import('#controllers/notes_controller')
-    
-    // Check the model
     const noteCount = await Note.query().count('* as total')
-    
+
     return response.json({
       success: true,
       controllerLoaded: !!controller.default,
@@ -101,72 +143,9 @@ router.get('/debug/notes-api', async ({ response }) => {
   }
 })
 
-// Add a direct debug endpoint for the Notes controller
-router.get('/debug/notes-direct', async ({ response }) => {
-  try {
-    // Create a test note
-    const noteData = {
-      title: 'Debug Test Note',
-      content: 'This is a **markdown** test note created directly for debugging.',
-      pinned: false
-    }
-    
-    // Try to add a note to the database
-    let note
-    try {
-      note = await Note.create(noteData)
-      console.log('Created test note for debugging')
-    } catch (createError) {
-      console.error('Error creating test note:', createError)
-      return response.status(500).json({
-        stage: 'create',
-        error: String(createError),
-        message: 'Failed to create test note'
-      })
-    }
-    
-    // Try to retrieve the controller
-    let NotesControllerClass
-    try {
-      const controller = await import('#controllers/notes_controller')
-      NotesControllerClass = controller.default
-      console.log('Successfully imported NotesController')
-    } catch (importError) {
-      console.error('Error importing NotesController:', importError)
-      return response.status(500).json({
-        stage: 'import',
-        error: String(importError),
-        message: 'Failed to import NotesController'
-      })
-    }
-    
-    // Return diagnostic information
-    return response.json({
-      success: true,
-      message: 'Debug test successful',
-      note: note,
-      controllerImported: !!NotesControllerClass,
-      routes: {
-        getAll: '/api/notes',
-        getOne: `/api/notes/${note.id}`,
-        update: `/api/notes/${note.id}`,
-        delete: `/api/notes/${note.id}`,
-        togglePin: `/api/notes/${note.id}/toggle-pin`
-      }
-    })
-  } catch (error) {
-    console.error('Error in notes-direct debug endpoint:', error)
-    return response.status(500).json({
-      success: false,
-      error: String(error),
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    })
-  }
-})
-
-// Test route for Markdown - removed the direct import of marked, will be handled by controller
-
-// Define API routes for Notes
+/* ------------------------------
+| API Routes - Notes
+|------------------------------ */
 router.group(() => {
   router.get('notes', [NotesController, 'index'])
   router.post('notes', [NotesController, 'store'])
@@ -176,13 +155,15 @@ router.group(() => {
   router.patch('notes/:id/toggle-pin', [NotesController, 'togglePin'])
 }).prefix('/api')
 
-// Define API routes for Projects
+/* ------------------------------
+| API Routes - Projects (Full CRUD)
+|------------------------------ */
 router.group(() => {
-  router.get('projects', [ProjectsController, 'index'])
-  router.post('projects', [ProjectsController, 'store'])
-  router.get('projects/:id', [ProjectsController, 'show'])
-  router.put('projects/:id', [ProjectsController, 'update'])
-  router.delete('projects/:id', [ProjectsController, 'destroy'])
+  router.get('projects', [ProjectsController, 'index'])         // GET /api/projects
+  router.post('projects', [ProjectsController, 'store'])        // POST /api/projects
+  router.get('projects/:id', [ProjectsController, 'show'])      // GET /api/projects/:id
+  router.put('projects/:id', [ProjectsController, 'update'])    // PUT /api/projects/:id
+  router.delete('projects/:id', [ProjectsController, 'destroy'])// DELETE /api/projects/:id
 }).prefix('/api')
 
 

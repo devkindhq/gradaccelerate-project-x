@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import Layout from './layout';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -10,23 +10,36 @@ interface Project {
   status: string;
 }
 
-export default function ProjectEdit() {
-  const { id } = usePage().props.params as { id: string };
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
+interface EditProps {
+  project?: Project;
+  params?: {
+    id: string | number;
+  };
+}
+
+export default function ProjectEdit({ project: initialProject, params }: EditProps) {
+  const [project, setProject] = useState<Project | null>(initialProject || null);
+  const [loading, setLoading] = useState(!initialProject);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    status: ''
+    title: initialProject?.title || '',
+    description: initialProject?.description || '',
+    status: initialProject?.status || 'pending'
   });
 
   useEffect(() => {
+    // If project was already passed as a prop, don't fetch
+    if (initialProject) {
+      return;
+    }
+    
     const fetchProject = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/projects/${id}`);
+        // Handle both string and number ids
+        const projectId = params?.id ? params.id : '';
+        const response = await axios.get(`/api/projects/${projectId}`);
         setProject(response.data);
         setFormData({
           title: response.data.title,
@@ -42,17 +55,31 @@ export default function ProjectEdit() {
       }
     };
 
-    if (id) {
+    if (params?.id) {
       fetchProject();
     }
-  }, [id]);
+  }, [params?.id, initialProject]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       setSaving(true);
+      
+      // Get the ID either from initialProject or from the fetched project
+      const id = initialProject?.id || project?.id;
+      
+      if (!id) {
+        setError('Project ID not found');
+        setSaving(false);
+        return;
+      }
+      
       await axios.put(`/api/projects/${id}`, formData);
-      window.location.href = '/projects';
+      
+      // Add a small delay to ensure the backend has processed the update
+      setTimeout(() => {
+        window.location.href = '/projects';
+      }, 300);
     } catch (err) {
       console.error('Failed to update project:', err);
       setError('Failed to update project. Please try again.');

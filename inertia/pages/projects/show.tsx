@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import Layout from './layout';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -10,17 +10,30 @@ interface Project {
   status: string;
 }
 
-export default function ProjectShow() {
-  const { id } = usePage().props.params as { id: string };
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
+interface ShowProps {
+  project?: Project;
+  params?: {
+    id: string | number;
+  };
+}
+
+export default function ProjectShow({ project: initialProject, params }: ShowProps) {
+  const [project, setProject] = useState<Project | null>(initialProject || null);
+  const [loading, setLoading] = useState(!initialProject);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // If project was already passed as a prop, don't fetch
+    if (initialProject) {
+      return;
+    }
+    
     const fetchProject = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/projects/${id}`);
+        // Handle both string and number ids
+        const projectId = params?.id ? params.id : '';
+        const response = await axios.get(`/api/projects/${projectId}`);
         setProject(response.data);
         setError(null);
       } catch (err) {
@@ -31,10 +44,10 @@ export default function ProjectShow() {
       }
     };
 
-    if (id) {
+    if (params?.id) {
       fetchProject();
     }
-  }, [id]);
+  }, [params?.id, initialProject]);
 
   if (loading) {
     return (

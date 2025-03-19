@@ -19,13 +19,37 @@ export default function ProjectCreate() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!formData.title.trim() || !formData.description.trim()) {
+      setError('Title and description are required');
+      return;
+    }
+    
     try {
       setLoading(true);
-      await axios.post('/api/projects', formData);
+      setError(null);
+      
+      // Explicitly log the API endpoint and request payload for debugging
+      console.log('Creating project with data:', formData);
+      console.log('API endpoint:', '/api/projects');
+      
+      // Make sure we're sending a POST request to the correct API endpoint
+      const response = await axios.post('/api/projects', formData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      console.log('Project created successfully:', response.data);
+      
+      // Navigate to the projects page after successful creation
       window.location.href = '/projects';
     } catch (err) {
       console.error('Failed to create project:', err);
-      setError('Failed to create project. Please try again.');
+      // Provide more detailed error information
+      const errorMessage = err.response?.data?.message || err.message || 'Unknown error occurred';
+      setError(`Failed to create project: ${errorMessage}`);
       setLoading(false);
     }
   };
