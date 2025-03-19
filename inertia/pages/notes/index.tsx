@@ -20,8 +20,11 @@ export default function NotesPage() {
   const [viewType, setViewType] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState<string>('created_at')
   const [order, setOrder] = useState<string>('desc')
-  const [formData, setFormData] = useState({ title: '', content: '' })
+  const [formData, setFormData] = useState({ title: '', content: '', pinned: false })
   const [processing, setProcessing] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
   // Fetch notes with current sorting
   const fetchNotes = async () => {
@@ -44,25 +47,39 @@ export default function NotesPage() {
   }, [sortBy, order])
 
   // Handle form input change
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  // Handle form submission
+  // Handle form submission - creates new note or updates existing one
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title || !formData.content) return
     
     setProcessing(true)
     try {
-      await axios.post('/api/notes', formData)
-      setFormData({ title: '', content: '' })
+      if (isEditing && editingNoteId) {
+        // Update existing note
+        await axios.put(`/api/notes/${editingNoteId}`, formData)
+        resetForm()
+      } else {
+        // Create new note
+        await axios.post('/api/notes', formData)
+        resetForm()
+      }
       fetchNotes() // Refresh notes list
     } catch (err) {
-      setError('Failed to create note. Please try again.')
+      setError(`Failed to ${isEditing ? 'update' : 'create'} note. Please try again.`)
     } finally {
       setProcessing(false)
     }
+  }
+
+  // Reset form and editing state
+  const resetForm = () => {
+    setFormData({ title: '', content: '', pinned: false })
+    setIsEditing(false)
+    setEditingNoteId(null)
   }
 
   // Handle keyboard shortcuts for submit
@@ -84,6 +101,43 @@ export default function NotesPage() {
     }
   }
 
+  // Delete a note
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`/api/notes/${id}`)
+      setNotes(notes.filter(note => note.id !== id))
+      setDeleteConfirm(null)
+    } catch (err) {
+      setError('Failed to delete note. Please try again.')
+    }
+  }
+
+  // Edit a note - populate form with note data
+  const handleEdit = (note: Note) => {
+    setFormData({
+      title: note.title,
+      content: note.content,
+      pinned: note.pinned
+    })
+    setIsEditing(true)
+    setEditingNoteId(note.id)
+  }
+
+  // Toggle a note's pinned status
+  const handleTogglePin = async (id: number) => {
+    try {
+      const response = await axios.patch(`/api/notes/${id}/toggle-pin`)
+      const updatedNote = response.data
+      
+      // Update the notes list with the updated note
+      setNotes(notes.map(note => 
+        note.id === id ? updatedNote : note
+      ))
+    } catch (err) {
+      setError('Failed to update note pin status. Please try again.')
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       <div className="mb-8">
@@ -99,6 +153,8 @@ export default function NotesPage() {
             submit={handleSubmit}
             processing={processing}
             handleKeyDown={handleKeyDown}
+            isEditing={isEditing}
+            cancelEdit={isEditing ? resetForm : undefined}
           />
         </div>
         
@@ -174,12 +230,49 @@ export default function NotesPage() {
               transition={{ duration: 0.3 }}
             >
               {notes.map((note) => (
-                <NoteCard key={note.id} note={note} viewType={viewType} />
+                <div key={note.id} className="group relative">
+                  <NoteCard 
+                    note={note} 
+                    viewType={viewType} 
+                    onDelete={() => setDeleteConfirm(note.id)}
+                    onEdit={handleEdit}
+                    onTogglePin={handleTogglePin}
+                  />
+                </div>
               ))}
             </motion.div>
           )}
         </div>
       </div>
+      
+      {/* Delete confirmation modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <motion.div 
+            className="bg-[#2C2C2E] p-6 rounded-xl max-w-md w-full mx-4"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <h3 className="text-xl font-semibold text-white mb-2">Delete Note</h3>
+            <p className="text-[#98989D] mb-6">Are you sure you want to delete this note? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 bg-[#3A3A3C] text-white px-4 py-2 rounded-lg hover:bg-[#4A4A4C]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
+                className="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
