@@ -9,9 +9,7 @@ export default class NotesController {
     const { sortBy = 'created_at', sortOrder  = 'desc'} = request.qs();
 
     const query = Note.query()
-
-    query.orderByRaw('pinned DESC');
-
+    
     const validSortFields = ['created_at', 'updated_at']
     if (validSortFields.includes(sortBy)) {
       query.orderBy(sortBy, sortOrder)
@@ -39,7 +37,7 @@ export default class NotesController {
    */
   async store({ request, response }: HttpContext) {
     const data = request.only(['title', 'content', 'pinned'])
-    const note = await Note.create(data)
+    await Note.create(data)
     return response.redirect().back()
   }
 
@@ -54,7 +52,7 @@ export default class NotesController {
 
     const data = request.only(['pinned']); 
     await note.merge(data).save()
-    return inertia.location('/notes');
+    return response.redirect().back();
   }
 
   /**

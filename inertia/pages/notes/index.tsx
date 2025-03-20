@@ -11,6 +11,7 @@ interface Note {
   id: number;
   title: string;
   content: string;
+  pinned: boolean;
   createdAt: string;
   updatedAt: string | null;
 }
@@ -58,16 +59,52 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
       submit(e as any);
     }
   };
+  
 
   useEffect(() => {
    router.get('/notes', { 
       sortBy: sortNotes.sortBy, 
       sortOrder: sortNotes.sortOrder 
     }, { preserveState: true,  onSuccess: (page) => {
-      setNotes(page.props.notes as Note[]) 
+
+      const fetchedNotes = page.props.notes as Note[];
+
+        // Sort so pinned notes always come first
+      const sortedNotes = [...fetchedNotes].sort((a, b) => {
+        if (a.pinned === b.pinned) {
+          return sortNotes.sortOrder === "asc"
+              ? a[sortNotes.sortBy] > b[sortNotes.sortBy]
+                ? 1
+                : -1
+              : a[sortNotes.sortBy] < b[sortNotes.sortBy]
+              ? 1
+              : -1;
+          }
+          return a.pinned ? -1 : 1; 
+        });
+
+        setNotes(sortedNotes);
     } });
 
   }, [sortNotes.sortBy, sortNotes.sortOrder]);
+  
+  const updatePinnedNote = (updatedNote: Note) => {
+    const updatedNotes = notes.map(note => 
+      note.id === updatedNote.id ? { ...note, pinned: updatedNote.pinned } : note
+    );
+  
+    // Sort so pinned notes always come first
+    const sortedNotes = [...updatedNotes].sort((a, b) => {
+      if (a.pinned === b.pinned) {
+        return sortNotes.sortOrder === 'asc'
+          ? a[sortNotes.sortBy] > b[sortNotes.sortBy] ? 1 : -1
+          : a[sortNotes.sortBy] < b[sortNotes.sortBy] ? 1 : -1;
+      }
+      return a.pinned ? -1 : 1;
+    });
+  
+    setNotes(sortedNotes);
+  };
   
 
   return (
@@ -101,7 +138,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
             </div>
             <div className="flex items-center gap-3">
               <SortNotes currentSortValue={sortNotes} onChange={setSortNotes} />
-              <ViewSwitcher currentView={viewType} onChange={setViewType} />
+              <ViewSwitcher currentView={viewType} onChange={setViewType}  />
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsFormVisible(!isFormVisible)}
@@ -166,7 +203,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className={viewType === 'list' ? 'w-full' : ''}
                 >
-                  <NoteCard note={note} viewType={viewType} />
+                  <NoteCard note={note} viewType={viewType} updatePinnedNote={updatePinnedNote} />
                 </motion.div>
               ))}
             </AnimatePresence>

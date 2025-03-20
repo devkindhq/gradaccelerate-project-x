@@ -1,7 +1,10 @@
 import { motion } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
 import { PinIcon, PinOff } from 'lucide-react'
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
+import { marked } from 'marked';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 
 interface Note {
@@ -16,21 +19,32 @@ interface Note {
 interface NoteCardProps {
   note: Note
   viewType: 'grid' | 'list'
+  updatePinnedNote: (updatedNote: Note) => void
 }
 
-export default function NoteCard({ note, viewType }: NoteCardProps) {
+export default function NoteCard({ note, viewType, updatePinnedNote }: NoteCardProps) {
   const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })
   const { setData, put, } = useForm({ pinned: note.pinned });
 
   const handlePinToggle = () => {
-    setData('pinned', !(note.pinned)); 
-    put(`/notes/${note.id}`, { preserveScroll: true });
+    const newPinnedState = !note.pinned  // Toggle state first
+    setData('pinned', newPinnedState); 
+  
+    put(`/notes/${note.id}`, {
+      onSuccess: () => {
+        updatePinnedNote({ ...note, pinned: newPinnedState });      
+      },
+      preserveScroll: true
+    });
   };
+
+  const renderedContent = marked(note.content); // Parse Markdown + HTML
+  
   
   
   return (
     <motion.div 
-      className={`relative overflow-hidden backdrop-blur-sm bg-[#2C2C2E]/80 border border-[#3A3A3C] ${
+      className={`relative overflow-hidden backdrop-blur-sm h-full bg-[#2C2C2E]/80 border border-[#3A3A3C] ${
         viewType === 'grid' ? 'rounded-xl' : 'rounded-lg'
       }`}
       style={{ 
@@ -58,8 +72,7 @@ export default function NoteCard({ note, viewType }: NoteCardProps) {
             </div>
           </div>
           <p className={`text-[#98989D] text-sm ${viewType === 'grid' ? 'line-clamp-3' : 'line-clamp-1'}`}>
-            {note.content}
-          </p>
+          <ReactMarkdown rehypePlugins={[rehypeRaw]}>{note.content}</ReactMarkdown>          </p>
         </div>
       </div>
       

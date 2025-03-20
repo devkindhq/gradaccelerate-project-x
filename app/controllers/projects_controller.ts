@@ -7,41 +7,26 @@ export default class ProjectsController {
   /**
    * Display a list of resources
    */
-  async index({ request, response }: HttpContext) {
-    try {
-      const page = request.input('page', 1)
-      const limit = request.input('limit', 10)
-      const projects = await Project.query().paginate(page, limit)
+  async index({ request, response, inertia }: HttpContext) {
+    const page = request.input('page', 1)
+    const limit = request.input('limit', 5)
 
-      return response.status(200).json(projects)
-    } catch (error) {
-      throw new AppException('Failed to fetch projects', { status: 500 })
-    }
+    const projects = await Project.query().orderBy('created_at', 'desc').paginate(page, limit)
+
+    return inertia.render('projects/index', { projects })
   }
 
   /**
    * Handle form submission for the create action
    */
   async store({ request, response, logger }: HttpContext) {
-    try {
-      // Validate the request data
       const data = await request.validateUsing(schemaProject)
       logger.info("data: " + JSON.stringify(data))
       console.log(data, "data: " + JSON.stringify(data))
 
-      const project = await Project.create(data)
+      await Project.create(data)
 
-      return response.status(201).json({
-        message: 'Project created successfully',
-        data: project,
-      })
-    } catch (error) {
-      if ('messages' in error) {
-        // Validation error
-        throw new AppException(error.messages, { status: 422 }) 
-      }
-      throw new AppException(error.message || 'Failed to create project', { status: 400 })
-    }
+      return response.redirect().back();
   }
 
   /**
@@ -65,7 +50,6 @@ export default class ProjectsController {
    * Handle form submission for the edit action
    */
   async update({ params, request, response, logger }: HttpContext) {
-    try {
       console.log(params, "params: " + JSON.stringify(params))
       logger.info(params, "params: " + JSON.stringify(params))
 
@@ -73,32 +57,16 @@ export default class ProjectsController {
       project.merge(await request.validateUsing(schemaProject))
       await project.save()
 
-      return response.status(200).json({
-        message: 'Project updated successfully',
-        data: project,
-      })
-    } catch (error) {
-      if ('messages' in error) {
-        // Validation error
-        throw new AppException(error.messages, { status: 422 }) 
-      }
-      throw new AppException(error.message || 'Failed to update project', { status: 400 })
-    }
+      return response.redirect().back();
+
   }
 
   /**
    * Delete record
    */
   async destroy({ params, response }: HttpContext) {
-    try {
-      const project = await Project.findByOrFail('id', params.id)
-      await project.delete()
-      return response.status(200).json({
-        message: 'Project deleted successfully',
-        data: project,
-      })
-    } catch (error) {
-      throw new AppException('Failed to delete project', { status: 400 })
-    }
+    const project = await Project.findByOrFail('id', params.id)
+    await project.delete()
+    return response.redirect().back()
   }
 }

@@ -85,11 +85,15 @@
     "framer-motion": "^12.4.10",
     "lucide-react": "^0.479.0",
     "luxon": "^3.5.0",
+    "marked": "^15.0.7",
     "mysql2": "^3.13.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
-    "reflect-metadata": "^0.2.2"
+    "react-simplemde-editor": "^5.2.0",
+    "reflect-metadata": "^0.2.2",
+    "rehype-raw": "^7.0.0",
+    "simplemde": "^1.11.2"
   },
   "hotHook": {
     "boundaries": [
