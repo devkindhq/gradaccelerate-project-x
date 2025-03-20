@@ -1,47 +1,90 @@
-import { Head, useForm, Link } from '@inertiajs/react'
+import { Head, useForm, Link, router } from '@inertiajs/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
-import { PlusIcon, XIcon, ArrowLeft } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { PlusIcon, XIcon, ArrowLeft, Trash2Icon, AlertTriangleIcon } from 'lucide-react'
 import NoteCard from './note-card'
 import NoteForm from './note-form'
 import ViewSwitcher from './view-switcher'
+import SortControls from './sort-controls'
+import { marked } from 'marked'
 
 interface Note {
   id: number;
   title: string;
   content: string;
+  pinned?: boolean;
   createdAt: string;
   updatedAt: string | null;
 }
 
 type ViewType = 'grid' | 'list'
+type SortField = 'created_at' | 'updated_at' | 'title'
+type SortOrder = 'asc' | 'desc'
 
 export default function Index({ notes: initialNotes }: { notes: Note[] }) {
   const [notes, setNotes] = useState(initialNotes)
   const [isFormVisible, setIsFormVisible] = useState(false)
   const [viewType, setViewType] = useState<ViewType>('grid')
+  const [sortBy, setSortBy] = useState<SortField>('created_at')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [previewNote, setPreviewNote] = useState<Note | null>(null)
+  const [noteToDelete, setNoteToDelete] = useState<number | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  
   const { data, setData, post, processing, reset } = useForm({
     title: '',
-    content: ''
+    content: '',
+    pinned: false
   });
+
+  // Function to sort notes
+  const sortNotes = (notesToSort: Note[]) => {
+    return [...notesToSort].sort((a, b) => {
+      // Always put pinned notes on top regardless of sort field/order
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      
+      // Then sort by the selected field and order
+      let fieldA, fieldB;
+      
+      if (sortBy === 'title') {
+        fieldA = a.title.toLowerCase();
+        fieldB = b.title.toLowerCase();
+      } else if (sortBy === 'updated_at') {
+        fieldA = a.updatedAt ? new Date(a.updatedAt).getTime() : new Date(a.createdAt).getTime();
+        fieldB = b.updatedAt ? new Date(b.updatedAt).getTime() : new Date(b.createdAt).getTime();
+      } else {
+        fieldA = new Date(a.createdAt).getTime();
+        fieldB = new Date(b.createdAt).getTime();
+      }
+      
+      if (sortOrder === 'asc') {
+        return fieldA > fieldB ? 1 : -1;
+      } else {
+        return fieldA < fieldB ? 1 : -1;
+      }
+    });
+  };
+
+  // Re-sort notes when sort parameters change
+  useEffect(() => {
+    setNotes(sortNotes(notes));
+  }, [sortBy, sortOrder]);
+  
+  // Apply initial sorting on component mount
+  useEffect(() => {
+    setNotes(sortNotes(initialNotes));
+  }, [initialNotes]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newNote: Note = {
-      id: Date.now(),
-      title: data.title,
-      content: data.content,
-      createdAt: new Date().toISOString(),
-      updatedAt: null
-    }
-    
-    setNotes([newNote, ...notes])
-    
     post('/notes', {
       onSuccess: () => {
-        reset()
-        setIsFormVisible(false)
+        // Refresh the page to get the updated list of notes
+        router.reload();
+        reset();
+        setIsFormVisible(false);
       }
     });
   };
@@ -52,15 +95,85 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
     }
   };
 
+  const handlePinToggle = (id: number) => {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    
+    // Optimistic UI update
+    setNotes(notes.map(n => 
+      n.id === id ? { ...n, pinned: !n.pinned } : n
+    ));
+    
+    // Send request to server
+    router.patch(`/notes/${id}/pin`, {}, {
+      onError: () => {
+        // Revert on error
+        setNotes(notes);
+      },
+      preserveState: true,
+    });
+  };
+
+  const handleSortChange = (field: SortField, order: SortOrder) => {
+    setSortBy(field);
+    setSortOrder(order);
+    
+    // Update URL query params for bookmarking
+    router.get('/notes', { sort_by: field, sort_order: order }, {
+      preserveState: true,
+      preserveScroll: true,
+      only: [],
+    });
+  };
+
+  const handleDeleteClick = (id: number) => {
+    setNoteToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleEditClick = (id: number) => {
+    router.visit(`/notes/${id}/edit`);
+  };
+
+  const confirmDelete = () => {
+    if (noteToDelete === null) return;
+    
+    // Optimistic UI update
+    const updatedNotes = notes.filter(n => n.id !== noteToDelete);
+    setNotes(updatedNotes);
+    
+    // Send delete request to server
+    router.delete(`/notes/${noteToDelete}`, {
+      onError: () => {
+        // Revert on error
+        setNotes(notes);
+      },
+      preserveState: true,
+    });
+    
+    // Close modal
+    setIsDeleteModalOpen(false);
+    setNoteToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setNoteToDelete(null);
+  };
+
+  const renderMarkdownPreview = (content: string) => {
+    return { __html: marked(content) };
+  };
+
   return (
     <>
       <Head title="Notes" />
-      <div className="min-h-screen bg-[#1C1C1E] text-white">
-        <div className="max-w-4xl mx-auto p-6">
+      <div className="min-h-screen bg-[#1C1C1E] text-white overflow-x-hidden">
+        <div className="max-w-4xl mx-auto px-4 py-6">
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-between items-center mb-8"
+            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8"
           >
             <div className="flex items-center gap-3">
               <Link 
@@ -81,7 +194,12 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
               </svg>
               <h1 className="text-3xl font-bold">Notes</h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <SortControls 
+                sortBy={sortBy} 
+                sortOrder={sortOrder} 
+                onChange={handleSortChange} 
+              />
               <ViewSwitcher currentView={viewType} onChange={setViewType} />
               <motion.button
                 whileTap={{ scale: 0.95 }}
@@ -120,6 +238,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
                   submit={submit}
                   processing={processing}
                   handleKeyDown={handleKeyDown}
+                  onCancel={() => setIsFormVisible(false)}
                 />
               </motion.div>
             )}
@@ -130,7 +249,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
             className={viewType === 'grid' 
-              ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-4"
               : "flex flex-col gap-3"
             }
           >
@@ -146,14 +265,102 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
                   }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   className={viewType === 'list' ? 'w-full' : ''}
+                  onClick={() => setPreviewNote(note)}
                 >
-                  <NoteCard note={note} viewType={viewType} />
+                  <NoteCard 
+                    note={note} 
+                    viewType={viewType} 
+                    onPin={handlePinToggle}
+                    onDelete={handleDeleteClick}
+                    onEdit={handleEditClick}
+                  />
                 </motion.div>
               ))}
             </AnimatePresence>
           </motion.div>
+
+          {/* Markdown Preview Modal */}
+          <AnimatePresence>
+            {previewNote && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                onClick={() => setPreviewNote(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="bg-[#2C2C2E] rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">{previewNote.title}</h2>
+                    <button 
+                      onClick={() => setPreviewNote(null)}
+                      className="p-2 hover:bg-[#3A3A3C] rounded-full transition-colors"
+                    >
+                      <XIcon size={20} />
+                    </button>
+                  </div>
+                  <div 
+                    className="prose prose-invert max-w-none prose-headings:text-white prose-a:text-blue-400"
+                    dangerouslySetInnerHTML={renderMarkdownPreview(previewNote.content)}
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Delete Confirmation Modal */}
+          <AnimatePresence>
+            {isDeleteModalOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                onClick={cancelDelete}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="bg-[#2C2C2E] rounded-xl p-6 max-w-md w-full"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-3 mb-4 text-red-500">
+                    <AlertTriangleIcon size={24} />
+                    <h2 className="text-xl font-bold">Delete Note</h2>
+                  </div>
+                  <p className="text-[#98989D] mb-6">
+                    Are you sure you want to delete this note? This action cannot be undone.
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={cancelDelete}
+                      className="px-4 py-2 rounded-lg bg-[#3A3A3C] text-white hover:bg-[#4A4A4C] transition-colors"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={confirmDelete}
+                      className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center gap-2"
+                    >
+                      <Trash2Icon size={16} />
+                      Delete
+                    </motion.button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </>
   )
-} 
+}

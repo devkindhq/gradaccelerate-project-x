@@ -13,6 +13,7 @@ router.get('/notes/:id', [NotesController, 'show'])
 router.put('/notes/:id', [NotesController, 'update'])
 router.patch('/notes/:id/pin', [NotesController, 'togglePin']) // New route for toggling pin status
 router.delete('/notes/:id', [NotesController, 'destroy'])
+router.get('/notes/:id/edit', [NotesController, 'edit']).as('notes.edit') // New route for editing a note
 
 // Projects routes
 router.get('/projects', [ProjectsController, 'index']).as('projects.index')
