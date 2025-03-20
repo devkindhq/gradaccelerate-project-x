@@ -1,25 +1,29 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 
-export default class Note extends BaseModel {
+export enum ProjectStatus {
+  PENDING = 'pending',
+  INPROGRESS = 'in-progress',
+  COMPLETED = 'completed',
+}
+
+export default class Project extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
   @column()
-  declare title: string
+  declare name: string
 
   @column()
-  declare content: string
+  declare description: string
 
-  @column({
-    prepare: (value: boolean) => Number(value), 
-    consume: (value: number) => Boolean(value), 
-  })
-  declare pinned: boolean
+  @column()
+  declare status: ProjectStatus
+
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
-} 
+  declare updatedAt: DateTime
+}

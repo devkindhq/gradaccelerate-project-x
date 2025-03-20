@@ -6,6 +6,7 @@ type ViewType = 'grid' | 'list'
 interface ViewSwitcherProps {
   currentView: ViewType
   onChange: (view: ViewType) => void
+  
 }
 
 export default function ViewSwitcher({ currentView, onChange }: ViewSwitcherProps) {

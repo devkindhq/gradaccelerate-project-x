@@ -8,3 +8,62 @@ body {
   height: 100%;
   width: 100%;
 }
+
+.EasyMDEContainer, .editor-toolbar, .CodeMirror, .editor-preview {
+  background: #3A3A3C !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+}
+
+.editor-toolbar {
+  border-bottom: 1px solid #505050 !important;
+}
+
+.CodeMirror {
+  height: 200px !important;
+  padding: 12px !important;
+  border-radius: 8px !important;
+}
+
+.CodeMirror-placeholder {
+  color: #98989D !important;
+}
+
+/* Ensure content scrolls vertically within the fixed height */
+.CodeMirror-scroll {
+  height: 100% !important; 
+  overflow-y: auto !important;
+  overflow-x: auto !important; 
+}
+
+.editor-preview pre {
+  background: #212121 !important;
+}
+
+.editor-preview {
+  background: #1C1C1E !important;
+  padding: 12px !important;
+  border-radius: 8px !important;
+}
+
+.editor-toolbar a {
+  color: white !important;
+  opacity: 0.8;
+  background: transparent !important; 
+  transition: all 0.2s ease;
+}
+
+/* Hover state */
+.editor-toolbar button:hover {
+  opacity: 1;
+  background: #505050 !important;
+  color: #ffffff !important;
+}
+
+/* Active state (when button is clicked or toggled on) */
+.editor-toolbar button.active {
+  background: #0A84FF !important; 
+  color: white !important; 
+  opacity: 1;
+}

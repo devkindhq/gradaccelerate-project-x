@@ -1,17 +1,23 @@
-import { Head, useForm, Link } from '@inertiajs/react'
+import { Head, useForm, Link, router } from '@inertiajs/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PlusIcon, XIcon, ArrowLeft } from 'lucide-react'
 import NoteCard from './note-card'
 import NoteForm from './note-form'
 import ViewSwitcher from './view-switcher'
+import SortNotes from './sort-notes'
 
 interface Note {
   id: number;
   title: string;
   content: string;
+  pinned: boolean;
   createdAt: string;
   updatedAt: string | null;
+}
+interface SortNotes {
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
 }
 
 type ViewType = 'grid' | 'list'
@@ -20,6 +26,8 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
   const [notes, setNotes] = useState(initialNotes)
   const [isFormVisible, setIsFormVisible] = useState(false)
   const [viewType, setViewType] = useState<ViewType>('grid')
+  const [sortNotes, setSortNotes] = useState<SortNotes>({ sortBy: 'createdAt', sortOrder: 'desc' });
+
   const { data, setData, post, processing, reset } = useForm({
     title: '',
     content: ''
@@ -51,6 +59,53 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
       submit(e as any);
     }
   };
+  
+
+  useEffect(() => {
+   router.get('/notes', { 
+      sortBy: sortNotes.sortBy, 
+      sortOrder: sortNotes.sortOrder 
+    }, { preserveState: true,  onSuccess: (page) => {
+
+      const fetchedNotes = page.props.notes as Note[];
+
+        // Sort so pinned notes always come first
+      const sortedNotes = [...fetchedNotes].sort((a, b) => {
+        if (a.pinned === b.pinned) {
+          return sortNotes.sortOrder === "asc"
+              ? a[sortNotes.sortBy] > b[sortNotes.sortBy]
+                ? 1
+                : -1
+              : a[sortNotes.sortBy] < b[sortNotes.sortBy]
+              ? 1
+              : -1;
+          }
+          return a.pinned ? -1 : 1; 
+        });
+
+        setNotes(sortedNotes);
+    } });
+
+  }, [sortNotes.sortBy, sortNotes.sortOrder]);
+  
+  const updatePinnedNote = (updatedNote: Note) => {
+    const updatedNotes = notes.map(note => 
+      note.id === updatedNote.id ? { ...note, pinned: updatedNote.pinned } : note
+    );
+  
+    // Sort so pinned notes always come first
+    const sortedNotes = [...updatedNotes].sort((a, b) => {
+      if (a.pinned === b.pinned) {
+        return sortNotes.sortOrder === 'asc'
+          ? a[sortNotes.sortBy] > b[sortNotes.sortBy] ? 1 : -1
+          : a[sortNotes.sortBy] < b[sortNotes.sortBy] ? 1 : -1;
+      }
+      return a.pinned ? -1 : 1;
+    });
+  
+    setNotes(sortedNotes);
+  };
+  
 
   return (
     <>
@@ -82,7 +137,8 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
               <h1 className="text-3xl font-bold">Notes</h1>
             </div>
             <div className="flex items-center gap-3">
-              <ViewSwitcher currentView={viewType} onChange={setViewType} />
+              <SortNotes currentSortValue={sortNotes} onChange={setSortNotes} />
+              <ViewSwitcher currentView={viewType} onChange={setViewType}  />
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsFormVisible(!isFormVisible)}
@@ -147,7 +203,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className={viewType === 'list' ? 'w-full' : ''}
                 >
-                  <NoteCard note={note} viewType={viewType} />
+                  <NoteCard note={note} viewType={viewType} updatePinnedNote={updatePinnedNote} />
                 </motion.div>
               ))}
             </AnimatePresence>

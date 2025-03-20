@@ -16,7 +16,6 @@ import server from '@adonisjs/core/services/server'
  * to a HTTP response.
  */
 server.errorHandler(() => import('#exceptions/handler'))
-
 /**
  * The server middleware stack runs middleware on all the HTTP
  * requests, even if there is no route registered for
@@ -49,3 +48,5 @@ export const middleware = router.named({
   guest: () => import('#middleware/guest_middleware'),
   auth: () => import('#middleware/auth_middleware'),
 })
+
+
