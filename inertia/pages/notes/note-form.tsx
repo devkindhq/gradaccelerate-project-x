@@ -1,6 +1,7 @@
 import type React from "react"
 import { motion } from "framer-motion"
 
+
 interface NoteFormProps {
   data: {
     title: string

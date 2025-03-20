@@ -11,7 +11,10 @@ export default class Note extends BaseModel {
   @column()
   declare content: string
 
-  @column()
+  @column({
+    prepare: (value: boolean) => Number(value), 
+    consume: (value: number) => Boolean(value), 
+  })
   declare pinned: boolean
 
   @column.dateTime({ autoCreate: true })

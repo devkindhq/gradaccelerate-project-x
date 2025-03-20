@@ -1,10 +1,11 @@
-import { Head, useForm, Link } from '@inertiajs/react'
+import { Head, useForm, Link, router } from '@inertiajs/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PlusIcon, XIcon, ArrowLeft } from 'lucide-react'
 import NoteCard from './note-card'
 import NoteForm from './note-form'
 import ViewSwitcher from './view-switcher'
+import SortNotes from './sort-notes'
 
 interface Note {
   id: number;
@@ -13,6 +14,10 @@ interface Note {
   createdAt: string;
   updatedAt: string | null;
 }
+interface SortNotes {
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
 
 type ViewType = 'grid' | 'list'
 
@@ -20,6 +25,8 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
   const [notes, setNotes] = useState(initialNotes)
   const [isFormVisible, setIsFormVisible] = useState(false)
   const [viewType, setViewType] = useState<ViewType>('grid')
+  const [sortNotes, setSortNotes] = useState<SortNotes>({ sortBy: 'createdAt', sortOrder: 'desc' });
+
   const { data, setData, post, processing, reset } = useForm({
     title: '',
     content: ''
@@ -52,6 +59,17 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
     }
   };
 
+  useEffect(() => {
+   router.get('/notes', { 
+      sortBy: sortNotes.sortBy, 
+      sortOrder: sortNotes.sortOrder 
+    }, { preserveState: true,  onSuccess: (page) => {
+      setNotes(page.props.notes as Note[]) 
+    } });
+
+  }, [sortNotes.sortBy, sortNotes.sortOrder]);
+  
+
   return (
     <>
       <Head title="Notes" />
@@ -82,6 +100,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
               <h1 className="text-3xl font-bold">Notes</h1>
             </div>
             <div className="flex items-center gap-3">
+              <SortNotes currentSortValue={sortNotes} onChange={setSortNotes} />
               <ViewSwitcher currentView={viewType} onChange={setViewType} />
               <motion.button
                 whileTap={{ scale: 0.95 }}

@@ -10,6 +10,8 @@ export default class NotesController {
 
     const query = Note.query()
 
+    query.orderByRaw('pinned DESC');
+
     const validSortFields = ['created_at', 'updated_at']
     if (validSortFields.includes(sortBy)) {
       query.orderBy(sortBy, sortOrder)
@@ -44,15 +46,15 @@ export default class NotesController {
   /**
    * Update a note
    */
-  async update({ params, request, response }: HttpContext) {
+  async update({ params, request, response, inertia }: HttpContext) {
     const note = await Note.find(params.id)
     if (!note) {
       return response.notFound({ message: 'Note not found' })
     }
 
-    const data = request.only(['title', 'content', 'pinned'])
+    const data = request.only(['pinned']); 
     await note.merge(data).save()
-    return response.redirect().back()
+    return inertia.location('/notes');
   }
 
   /**

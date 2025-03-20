@@ -1,10 +1,14 @@
 import { motion } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
+import { PinIcon, PinOff } from 'lucide-react'
+import { useForm } from '@inertiajs/react';
+
 
 interface Note {
   id: number;
   title: string;
   content: string;
+  pinned: boolean;
   createdAt: string;
   updatedAt: string | null;
 }
@@ -16,6 +20,13 @@ interface NoteCardProps {
 
 export default function NoteCard({ note, viewType }: NoteCardProps) {
   const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })
+  const { setData, put, } = useForm({ pinned: note.pinned });
+
+  const handlePinToggle = () => {
+    setData('pinned', !(note.pinned)); 
+    put(`/notes/${note.id}`, { preserveScroll: true });
+  };
+  
   
   return (
     <motion.div 
@@ -33,7 +44,18 @@ export default function NoteCard({ note, viewType }: NoteCardProps) {
         <div className={viewType === 'list' ? 'flex-1' : ''}>
           <div className="flex justify-between items-start mb-2">
             <h2 className="text-lg font-medium text-white">{note.title}</h2>
-            <span className="text-xs text-[#98989D]">{timeAgo}</span>
+            <div className='flex items-center gap-2'>
+              <span className="text-xs text-[#98989D]">{timeAgo}</span>
+              <button onClick={handlePinToggle}>
+                {
+                  note?.pinned ? (
+                    <PinOff size={16} className="text-[#0A84FF]" />
+                  ) : (
+                    <PinIcon size={16} className="text-[#98989D]" />
+                  )
+                }
+              </button>
+            </div>
           </div>
           <p className={`text-[#98989D] text-sm ${viewType === 'grid' ? 'line-clamp-3' : 'line-clamp-1'}`}>
             {note.content}
