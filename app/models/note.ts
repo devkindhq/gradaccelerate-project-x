@@ -11,9 +11,12 @@ export default class Note extends BaseModel {
   @column()
   declare content: string
 
+  @column()
+  declare pinned: boolean
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
-} 
+}
