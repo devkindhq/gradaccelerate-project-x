@@ -6,9 +6,7 @@ let marked: any
 try {
   // Static import with require to avoid any async loading issues
   marked = require('marked').marked
-  console.log('Marked package loaded successfully')
 } catch (error) {
-  console.warn('Marked package not available. Markdown rendering disabled.', error)
   // Create a simple fallback function that returns the original text
   marked = (text: string) => text
 }
@@ -19,7 +17,6 @@ export default class NotesController {
    */
   async index({ request, response }: HttpContext) {
     try {
-      console.log('Notes index method called')
       const sortBy = request.input('sort_by', 'created_at')
       const order = request.input('order', 'desc')
       
@@ -29,9 +26,6 @@ export default class NotesController {
       
       const finalSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'created_at'
       const finalOrder = allowedOrders.includes(order) ? order : 'desc'
-      
-      // Log for debugging
-      console.log(`Fetching notes with sort: ${finalSortBy}, order: ${finalOrder}`)
       
       // First get pinned notes, then get unpinned notes with the requested sorting
       const pinnedNotes = await Note.query()
@@ -44,11 +38,9 @@ export default class NotesController {
       
       // Combine the results
       const notes = [...pinnedNotes, ...unpinnedNotes]
-      console.log(`Found ${notes.length} notes`)
       
       return response.json(notes)
     } catch (error) {
-      console.error('Error in notes index method:', error)
       return response.status(500).json({
         error: 'An error occurred while fetching notes',
         details: String(error),
@@ -74,7 +66,6 @@ export default class NotesController {
       const note = await Note.create(noteData)
       return response.status(201).json(note)
     } catch (error) {
-      console.error('Error in notes store method:', error)
       return response.status(500).json({
         error: 'An error occurred while creating the note',
         details: process.env.NODE_ENV === 'development' ? String(error) : undefined
@@ -87,25 +78,18 @@ export default class NotesController {
    */
   async show({ params, response }: HttpContext) {
     try {
-      console.log(`Fetching note with ID: ${params.id}`)
       const note = await Note.find(params.id)
       
       if (!note) {
-        console.log(`Note with ID ${params.id} not found`)
         return response.status(404).json({ message: 'Note not found' })
       }
-      
-      console.log(`Found note: ${note.title}`)
       
       // Parse markdown to HTML for frontend rendering
       if (note.content) {
         try {
-          console.log('Attempting to render markdown content')
           const renderedContent = marked(note.content)
-          console.log('Markdown rendered successfully')
           return response.json({ ...note.toJSON(), renderedHtml: renderedContent })
         } catch (markdownError) {
-          console.error('Error parsing markdown:', markdownError)
           // Return the note without rendered HTML if markdown parsing fails
           return response.json(note)
         }
@@ -113,7 +97,6 @@ export default class NotesController {
       
       return response.json(note)
     } catch (error) {
-      console.error('Error in notes show method:', error)
       return response.status(500).json({
         error: 'An error occurred while fetching the note',
         details: String(error),
@@ -139,7 +122,6 @@ export default class NotesController {
       
       return response.json(note)
     } catch (error) {
-      console.error('Error in notes update method:', error)
       return response.status(500).json({
         error: 'An error occurred while updating the note',
         details: process.env.NODE_ENV === 'development' ? String(error) : undefined
@@ -161,7 +143,6 @@ export default class NotesController {
       await note.delete()
       return response.status(204).send('')
     } catch (error) {
-      console.error('Error in notes destroy method:', error)
       return response.status(500).json({
         error: 'An error occurred while deleting the note',
         details: process.env.NODE_ENV === 'development' ? String(error) : undefined
@@ -185,7 +166,6 @@ export default class NotesController {
       
       return response.json(note)
     } catch (error) {
-      console.error('Error in notes togglePin method:', error)
       return response.status(500).json({
         error: 'An error occurred while toggling pin status',
         details: process.env.NODE_ENV === 'development' ? String(error) : undefined

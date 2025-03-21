@@ -53,7 +53,7 @@ export default function NoteForm({
             value={data.title}
             onChange={(e) => setData("title", e.target.value)}
             placeholder="Note title"
-            className="w-full px-4 py-3 bg-[#3A3A3C] text-white placeholder-[#98989D] rounded-lg border-none focus:ring-2 focus:ring-[#0A84FF] focus:outline-none transition-all duration-200"
+            className="w-full px-4 py-3 bg-[#1A1A1C] text-white placeholder-[#98989D] rounded-lg border-none focus:ring-2 focus:ring-[#0A84FF] focus:outline-none transition-all duration-200"
             required
           />
         </div>
@@ -65,7 +65,7 @@ export default function NoteForm({
             onChange={(e) => setData("content", e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Note content"
-            className="w-full px-4 py-3 bg-[#3A3A3C] text-white placeholder-[#98989D] rounded-lg border-none focus:ring-2 focus:ring-[#0A84FF] focus:outline-none min-h-[120px] transition-all duration-200"
+            className="w-full px-4 py-3 bg-[#1A1A1C] text-white placeholder-[#98989D] rounded-lg border-none focus:ring-2 focus:ring-[#0A84FF] focus:outline-none min-h-[120px] transition-all duration-200"
             required
           />
         </div>

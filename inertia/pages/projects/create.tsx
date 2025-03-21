@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import Layout from './layout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 export default function ProjectCreate() {
@@ -11,17 +11,46 @@ export default function ProjectCreate() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Add CSRF token setup
+  useEffect(() => {
+    // Get CSRF token from meta tag - AdonisJS typically sets this
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (csrfToken) {
+      axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.title.trim()) {
+      errors.title = 'Title is required';
+    }
+    if (!formData.description.trim()) {
+      errors.description = 'Description is required';
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.description.trim()) {
-      setError('Title and description are required');
+    if (!validateForm()) {
       return;
     }
     
@@ -29,27 +58,56 @@ export default function ProjectCreate() {
       setLoading(true);
       setError(null);
       
-      // Explicitly log the API endpoint and request payload for debugging
-      console.log('Creating project with data:', formData);
-      console.log('API endpoint:', '/api/projects');
+      // Clear detailed debugging
+      console.log('Sending project data:', formData);
       
-      // Make sure we're sending a POST request to the correct API endpoint
-      const response = await axios.post('/api/projects', formData, {
+      // Make sure the data structure matches what the controller expects
+      const projectData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        status: formData.status
+      };
+      
+      const response = await axios.post('/api/projects', projectData, {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
         }
       });
       
-      console.log('Project created successfully:', response.data);
+      console.log('Server response:', response);
       
-      // Navigate to the projects page after successful creation
-      window.location.href = '/projects';
+      // Navigate to the projects page on success
+      if (response.data && response.status >= 200 && response.status < 300) {
+        console.log('Project created successfully:', response.data);
+        window.location.href = '/projects';
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err) {
       console.error('Failed to create project:', err);
-      // Provide more detailed error information
-      const errorMessage = err.response?.data?.message || err.message || 'Unknown error occurred';
-      setError(`Failed to create project: ${errorMessage}`);
+      
+      // More detailed error handling
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error data:', err.response.data);
+        console.error('Error status:', err.response.status);
+        
+        const errorMessage = err.response.data?.error || 
+                            err.response.data?.message || 
+                            `Error ${err.response.status}: ${err.response.statusText}`;
+        setError(`Failed to create project: ${errorMessage}`);
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error('No response received:', err.request);
+        setError('Failed to create project: No response from server');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError(`Failed to create project: ${err.message}`);
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -76,8 +134,10 @@ export default function ProjectCreate() {
                 value={formData.title}
                 onChange={handleChange}
                 className="mt-1 block w-full bg-[#2C2C2E] border border-[#3C3C3E] rounded-md p-2 text-white"
-                required
               />
+              {fieldErrors.title && (
+                <p className="text-red-400 text-sm mt-1">{fieldErrors.title}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-400">Description</label>
@@ -87,8 +147,10 @@ export default function ProjectCreate() {
                 onChange={handleChange}
                 className="mt-1 block w-full bg-[#2C2C2E] border border-[#3C3C3E] rounded-md p-2 text-white"
                 rows={4}
-                required
               />
+              {fieldErrors.description && (
+                <p className="text-red-400 text-sm mt-1">{fieldErrors.description}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-400">Status</label>
@@ -102,6 +164,9 @@ export default function ProjectCreate() {
                 <option value="in-progress">In Progress</option>
                 <option value="completed">Completed</option>
               </select>
+              {fieldErrors.status && (
+                <p className="text-red-400 text-sm mt-1">{fieldErrors.status}</p>
+              )}
             </div>
             <div className="flex space-x-4">
               <button
