@@ -1,13 +1,7 @@
 import { Head, useForm, Link } from '@inertiajs/react'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
-
-interface Project {
-  id: number;
-  title: string;
-  description: string;
-  status: 'pending' | 'in-progress' | 'completed';
-}
+import { Project } from '~/types'
 
 export default function Edit({ project }: { project: Project }) {
   const { data, setData, put, processing, errors } = useForm({

@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion'
 import { SortAsc, SortDesc, Calendar, Clock } from 'lucide-react'
-
-type SortField = 'created_at' | 'updated_at' | 'title'
-type SortOrder = 'asc' | 'desc'
+import { SortField, SortOrder } from '~/types'
 
 interface SortControlsProps {
   sortBy: SortField

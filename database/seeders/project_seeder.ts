@@ -1,5 +1,6 @@
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
-import Project, { ProjectStatus } from '#models/project'
+import Project from '#models/project'
+import { ProjectStatus } from '../../app/enum/project.js'
 
 export default class ProjectSeeder extends BaseSeeder {
   async run() {
@@ -22,14 +23,16 @@ export default class ProjectSeeder extends BaseSeeder {
       },
       {
         title: 'API Integration Service',
-        description: 'Building a service to integrate with third-party APIs and provide a unified interface.',
+        description:
+          'Building a service to integrate with third-party APIs and provide a unified interface.',
         status: ProjectStatus.IN_PROGRESS,
       },
       {
         title: 'Authentication Module',
-        description: 'Implementation of a secure authentication system with multi-factor authentication support.',
+        description:
+          'Implementation of a secure authentication system with multi-factor authentication support.',
         status: ProjectStatus.COMPLETED,
-      }
+      },
     ])
   }
 }

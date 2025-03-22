@@ -1,19 +1,11 @@
 import { motion } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
 import { PinIcon, TrashIcon, ClockIcon, EditIcon } from 'lucide-react'
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string | null;
-  pinned?: boolean;
-}
+import { Note, ViewType } from '~/types'
 
 interface NoteCardProps {
   note: Note
-  viewType: 'grid' | 'list'
+  viewType: ViewType
   onPin?: (id: number) => void
   onDelete?: (id: number) => void
   onEdit?: (id: number) => void

@@ -1,5 +1,6 @@
 import { HttpContext } from '@adonisjs/core/http'
-import Project, { ProjectStatus } from '#models/project'
+import Project from '#models/project'
+import { ProjectStatus } from '../enum/project.js'
 
 export default class ProjectsController {
   /**
@@ -8,13 +9,13 @@ export default class ProjectsController {
   async index({ request, inertia, response }: HttpContext) {
     const page = request.input('page', 1)
     const limit = request.input('limit', 10)
-    
+
     const projects = await Project.query().paginate(page, limit)
-    
+
     if (request.accepts(['html'])) {
       return inertia.render('projects/index', { projects })
     }
-    
+
     return response.json(projects)
   }
 
@@ -31,7 +32,7 @@ export default class ProjectsController {
   async store({ request, response }: HttpContext) {
     const data = request.only(['title', 'description', 'status'])
     const project = await Project.create(data)
-    
+
     return response.redirect().toRoute('projects.index')
   }
 
@@ -40,15 +41,15 @@ export default class ProjectsController {
    */
   async show({ params, request, response, inertia }: HttpContext) {
     const project = await Project.find(params.id)
-    
+
     if (!project) {
       return response.notFound({ message: 'Project not found' })
     }
-    
+
     if (request.accepts(['html'])) {
       return inertia.render('projects/show', { project })
     }
-    
+
     return response.json(project)
   }
 
@@ -57,11 +58,11 @@ export default class ProjectsController {
    */
   async edit({ params, inertia, response }: HttpContext) {
     const project = await Project.find(params.id)
-    
+
     if (!project) {
       return response.notFound({ message: 'Project not found' })
     }
-    
+
     return inertia.render('projects/edit', { project })
   }
 
@@ -70,14 +71,14 @@ export default class ProjectsController {
    */
   async update({ params, request, response }: HttpContext) {
     const project = await Project.find(params.id)
-    
+
     if (!project) {
       return response.notFound({ message: 'Project not found' })
     }
-    
+
     const data = request.only(['title', 'description', 'status'])
     await project.merge(data).save()
-    
+
     return response.redirect().toRoute('projects.index')
   }
 
@@ -86,20 +87,20 @@ export default class ProjectsController {
    */
   async updateStatus({ params, request, response }: HttpContext) {
     const project = await Project.find(params.id)
-    
+
     if (!project) {
       return response.notFound({ message: 'Project not found' })
     }
-    
+
     const { status } = request.only(['status'])
-    
+
     // Validate status
     if (!Object.values(ProjectStatus).includes(status)) {
       return response.badRequest({ message: 'Invalid status value' })
     }
-    
+
     await project.merge({ status }).save()
-    
+
     return response.json(project)
   }
 
@@ -108,13 +109,13 @@ export default class ProjectsController {
    */
   async destroy({ params, response }: HttpContext) {
     const project = await Project.find(params.id)
-    
+
     if (!project) {
       return response.notFound({ message: 'Project not found' })
     }
-    
+
     await project.delete()
-    
+
     return response.redirect().toRoute('projects.index')
   }
 }

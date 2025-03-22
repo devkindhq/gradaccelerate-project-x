@@ -3,13 +3,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import NoteForm from './note-form'
 import { Link } from '@inertiajs/react'
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  pinned?: boolean;
-}
+import { Note } from '~/types'
 
 export default function Edit({ note }: { note: Note }) {
   const { data, setData, put, processing } = useForm({

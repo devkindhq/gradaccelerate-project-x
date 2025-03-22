@@ -2,25 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { ArrowLeft, Edit2, Trash2, Plus, Clock, Calendar } from 'lucide-react'
-
-interface Project {
-  id: number;
-  title: string;
-  description: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  createdAt: string;
-  updatedAt: string | null;
-}
-
-interface PaginatedProjects {
-  data: Project[];
-  meta: {
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-  }
-}
+import { PaginatedProjects } from '~/types'
 
 export default function Index({ projects }: { projects: PaginatedProjects }) {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);

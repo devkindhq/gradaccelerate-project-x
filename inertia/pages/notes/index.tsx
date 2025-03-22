@@ -7,19 +7,7 @@ import NoteForm from './note-form'
 import ViewSwitcher from './view-switcher'
 import SortControls from './sort-controls'
 import { marked } from 'marked'
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  pinned?: boolean;
-  createdAt: string;
-  updatedAt: string | null;
-}
-
-type ViewType = 'grid' | 'list'
-type SortField = 'created_at' | 'updated_at' | 'title'
-type SortOrder = 'asc' | 'desc'
+import { Note, ViewType, SortField, SortOrder } from '~/types'
 
 export default function Index({ notes: initialNotes }: { notes: Note[] }) {
   const [notes, setNotes] = useState(initialNotes)
