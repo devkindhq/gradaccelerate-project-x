@@ -1,5 +1,5 @@
-import { Head } from '@inertiajs/react'
-import { Link } from '@inertiajs/react'
+import { Head, Link } from '@inertiajs/react'
+
 
 export default function Home() {
   return (
@@ -23,12 +23,20 @@ export default function Home() {
             <h1 className="text-4xl font-bold mb-12">Welcome to Race Track</h1>
 
             {/* Cards Container */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl w-full">
               {/* Notes Card */}
               <Link href="/notes" className="block">
                 <div className="bg-[#2C2C2E] p-6 rounded-xl hover:bg-[#3C3C3E] transition-colors duration-200">
                   <h2 className="text-2xl font-semibold mb-3">Notes</h2>
                   <p className="text-gray-400">Manage your notes and thoughts in one place</p>
+                </div>
+              </Link>
+
+              {/* Projects Card */}
+              <Link href="/projects" className="block">
+                <div className="bg-[#2C2C2E] p-6 rounded-xl hover:bg-[#3C3C3E] transition-colors duration-200">
+                  <h2 className="text-2xl font-semibold mb-3">Projects</h2>
+                  <p className="text-gray-400">Track your projects and their progress</p>
                 </div>
               </Link>
 

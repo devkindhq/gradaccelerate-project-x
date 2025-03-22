@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import { LayoutGridIcon, ListIcon } from 'lucide-react'
-
-type ViewType = 'grid' | 'list'
+import { ViewType } from '~/types'
 
 interface ViewSwitcherProps {
   currentView: ViewType
@@ -35,4 +34,4 @@ export default function ViewSwitcher({ currentView, onChange }: ViewSwitcherProp
       </motion.button>
     </div>
   )
-} 
+}
