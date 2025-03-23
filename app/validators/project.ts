@@ -1,4 +1,4 @@
-import { ProjectStatus } from '#models/project'
+import { ProjectStatus } from '#enums/project-enum'
 import vine from '@vinejs/vine'
 
 

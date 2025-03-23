@@ -6,27 +6,15 @@ import NoteCard from './note-card'
 import NoteForm from './note-form'
 import ViewSwitcher from './view-switcher'
 import SortNotes from './sort-notes'
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  pinned: boolean;
-  createdAt: string;
-  updatedAt: string | null;
-}
-interface SortNotes {
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
-}
+import { NoteInterface, SortNotesInterface } from '#inertia/interfaces/note-interface'
 
 type ViewType = 'grid' | 'list'
 
-export default function Index({ notes: initialNotes }: { notes: Note[] }) {
+export default function Index({ notes: initialNotes }: { notes: NoteInterface[] }) {
   const [notes, setNotes] = useState(initialNotes)
   const [isFormVisible, setIsFormVisible] = useState(false)
   const [viewType, setViewType] = useState<ViewType>('grid')
-  const [sortNotes, setSortNotes] = useState<SortNotes>({ sortBy: 'createdAt', sortOrder: 'desc' });
+  const [sortNotes, setSortNotes] = useState<SortNotesInterface>({ sortBy: 'createdAt', sortOrder: 'desc' });
 
   const { data, setData, post, processing, reset } = useForm({
     title: '',
@@ -36,10 +24,11 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newNote: Note = {
+    const newNote: NoteInterface = {
       id: Date.now(),
       title: data.title,
       content: data.content,
+      pinned: false,
       createdAt: new Date().toISOString(),
       updatedAt: null
     }
@@ -67,7 +56,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
       sortOrder: sortNotes.sortOrder 
     }, { preserveState: true,  onSuccess: (page) => {
 
-      const fetchedNotes = page.props.notes as Note[];
+      const fetchedNotes = page.props.notes as NoteInterface[];
 
         // Sort so pinned notes always come first
       const sortedNotes = [...fetchedNotes].sort((a, b) => {
@@ -88,7 +77,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
 
   }, [sortNotes.sortBy, sortNotes.sortOrder]);
   
-  const updatePinnedNote = (updatedNote: Note) => {
+  const updatePinnedNote = (updatedNote: NoteInterface) => {
     const updatedNotes = notes.map(note => 
       note.id === updatedNote.id ? { ...note, pinned: updatedNote.pinned } : note
     );

@@ -1,11 +1,8 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { ProjectStatus } from '#enums/project-enum'
 
-export enum ProjectStatus {
-  PENDING = 'pending',
-  INPROGRESS = 'in-progress',
-  COMPLETED = 'completed',
-}
+
 
 export default class Project extends BaseModel {
   @column({ isPrimary: true })

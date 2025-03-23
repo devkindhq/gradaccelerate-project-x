@@ -1,13 +1,11 @@
+import { SortNotesInterface } from '#inertia/interfaces/note-interface'
 import { motion } from 'framer-motion'
 
-interface SortNotes {
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
-}
+
 
 interface SortNotesProps {
-  currentSortValue: SortNotes
-  onChange: (view: SortNotes) => void
+  currentSortValue: SortNotesInterface
+  onChange: (view: SortNotesInterface) => void
 }
 
 export default function SortNotes({ currentSortValue, onChange }: SortNotesProps) {

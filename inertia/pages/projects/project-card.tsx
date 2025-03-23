@@ -1,8 +1,9 @@
 import {Clock, Loader2, CheckCircle2, Pencil } from 'lucide-react' 
 import { motion } from 'framer-motion'
+import { ProjectInterface } from '#inertia/interfaces/project-interface'
 
-export default function ProjectCard({ project, onEdit }) {
-    const getStatusStyles = (status) => {
+export default function ProjectCard({ project, onEdit } : { project: ProjectInterface, onEdit: (project: ProjectInterface) => void }) {
+    const getStatusStyles = (status: string) => {
       switch (status) {
         case 'pending': return 'bg-yellow-500/20 text-yellow-500'
         case 'in-progress': return 'bg-blue-500/20 text-blue-500'
@@ -11,7 +12,7 @@ export default function ProjectCard({ project, onEdit }) {
       }
     }
   
-    const getStatusIcon = (status) => {
+    const getStatusIcon = (status: string) => {
       switch (status) {
         case 'pending': return <Clock className="w-4 h-4" />
         case 'in-progress': return <Loader2 className="w-4 h-4 animate-spin" />

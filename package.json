@@ -32,7 +32,8 @@
     "#tests/*": "./tests/*.js",
     "#start/*": "./start/*.js",
     "#config/*": "./config/*.js",
-    "#inertia/*": "./inertia/*.js"
+    "#inertia/*": "./inertia/*.js",
+    "#enums/*": "./app/enums/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^7.8.2",

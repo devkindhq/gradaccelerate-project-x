@@ -50,7 +50,7 @@ export default class NotesController {
       return response.notFound({ message: 'Note not found' })
     }
 
-    const data = request.only(['pinned']); 
+    const data = request.only(['title', 'content', 'pinned']); 
     await note.merge(data).save()
     return response.redirect().back();
   }

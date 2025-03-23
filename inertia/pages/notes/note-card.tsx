@@ -5,21 +5,12 @@ import { router, useForm } from '@inertiajs/react';
 import { marked } from 'marked';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  pinned: boolean;
-  createdAt: string;
-  updatedAt: string | null;
-}
+import { NoteInterface } from '#inertia/interfaces/note-interface';
 
 interface NoteCardProps {
-  note: Note
+  note: NoteInterface
   viewType: 'grid' | 'list'
-  updatePinnedNote: (updatedNote: Note) => void
+  updatePinnedNote: (updatedNote: NoteInterface) => void
 }
 
 export default function NoteCard({ note, viewType, updatePinnedNote }: NoteCardProps) {

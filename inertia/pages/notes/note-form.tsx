@@ -1,8 +1,7 @@
 import type React from "react"
 import { motion } from "framer-motion"
-import ReactMarkdown from "react-markdown"
 import "easymde/dist/easymde.min.css"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 
 

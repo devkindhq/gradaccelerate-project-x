@@ -4,15 +4,9 @@ import { ArrowLeft, Folder, Plus, ChevronLeft, ChevronRight } from 'lucide-react
 import { useEffect, useState } from 'react'
 import ProjectCard from './project-card'
 import ProjectForm from './project-form'
+import { ProjectInterface } from '#inertia/interfaces/project-interface'
 
-interface Project {
-  id: number;
-  title: string;
-  description: string;
-  status: any;
-  createdAt: string;
-  updatedAt: string | null;
-}
+
 
 interface PaginationMeta {
   total: number;
@@ -25,14 +19,14 @@ interface PaginationMeta {
 
 interface ProjectProps {
   projects: {
-    data: Project[];
+    data: ProjectInterface[];
     meta: PaginationMeta;
   };
 }
 
 export default function Project({ projects: initialProjects }: ProjectProps) {
   console.log(initialProjects)
-  const [projects, setProjects] = useState<Project[]>(initialProjects.data || []);
+  const [projects, setProjects] = useState<ProjectInterface[]>(initialProjects.data || []);
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState('create')
   const [selectedProject, setSelectedProject] = useState({})
@@ -107,7 +101,7 @@ export default function Project({ projects: initialProjects }: ProjectProps) {
     setIsDialogOpen(true)
   }
 
-  const handleOpenEdit = (project: Project) => {
+  const handleOpenEdit = (project: ProjectInterface) => {
     setSelectedProject(project)
     setDialogMode('edit')
     setIsDialogOpen(true)
