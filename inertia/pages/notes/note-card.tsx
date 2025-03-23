@@ -1,25 +1,41 @@
 import { motion } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string | null;
-}
+import { PinIcon, PinOff } from 'lucide-react'
+import { router, useForm } from '@inertiajs/react';
+import { marked } from 'marked';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import { NoteInterface } from '#inertia/interfaces/note-interface';
 
 interface NoteCardProps {
-  note: Note
+  note: NoteInterface
   viewType: 'grid' | 'list'
+  updatePinnedNote: (updatedNote: NoteInterface) => void
 }
 
-export default function NoteCard({ note, viewType }: NoteCardProps) {
+export default function NoteCard({ note, viewType, updatePinnedNote }: NoteCardProps) {
   const timeAgo = formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })
+  const { setData, put, } = useForm({ pinned: note.pinned });
+
+  const handlePinToggle = () => {
+    const newPinnedState = !note.pinned  // Toggle state first
+    setData('pinned', newPinnedState); 
+  
+    put(`/notes/${note.id}`, {
+      onSuccess: () => {
+        updatePinnedNote({ ...note, pinned: newPinnedState });      
+      },
+      preserveScroll: true
+    });
+  };
+
+  const renderedContent = marked(note.content); // Parse Markdown + HTML
+  
+  
   
   return (
     <motion.div 
-      className={`relative overflow-hidden backdrop-blur-sm bg-[#2C2C2E]/80 border border-[#3A3A3C] ${
+      className={`relative overflow-hidden backdrop-blur-sm h-full bg-[#2C2C2E]/80 border border-[#3A3A3C] ${
         viewType === 'grid' ? 'rounded-xl' : 'rounded-lg'
       }`}
       style={{ 
@@ -33,11 +49,21 @@ export default function NoteCard({ note, viewType }: NoteCardProps) {
         <div className={viewType === 'list' ? 'flex-1' : ''}>
           <div className="flex justify-between items-start mb-2">
             <h2 className="text-lg font-medium text-white">{note.title}</h2>
-            <span className="text-xs text-[#98989D]">{timeAgo}</span>
+            <div className='flex items-center gap-2'>
+              <span className="text-xs text-[#98989D]">{timeAgo}</span>
+              <button onClick={handlePinToggle}>
+                {
+                  note?.pinned ? (
+                    <PinOff size={16} className="text-[#0A84FF]" />
+                  ) : (
+                    <PinIcon size={16} className="text-[#98989D]" />
+                  )
+                }
+              </button>
+            </div>
           </div>
           <p className={`text-[#98989D] text-sm ${viewType === 'grid' ? 'line-clamp-3' : 'line-clamp-1'}`}>
-            {note.content}
-          </p>
+          <ReactMarkdown rehypePlugins={[rehypeRaw]}>{note.content}</ReactMarkdown>          </p>
         </div>
       </div>
       

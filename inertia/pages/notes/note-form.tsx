@@ -1,5 +1,9 @@
 import type React from "react"
 import { motion } from "framer-motion"
+import "easymde/dist/easymde.min.css"
+import { useEffect, useMemo, useState } from "react"
+
+
 
 interface NoteFormProps {
   data: {
@@ -13,6 +17,24 @@ interface NoteFormProps {
 }
 
 export default function NoteForm({ data, setData, submit, processing, handleKeyDown }: NoteFormProps) {
+  const [SimpleMDE, setSimpleMDE] = useState<any>(null);
+  const [options, setOptions] = useState({
+    spellChecker: false,
+    placeholder: "Write in Markdown...",
+    toolbar: ["bold", "italic", "heading", "|", "unordered-list", "ordered-list", "|", "code", "link", "preview"],
+  });
+
+  const memoizedOptions = useMemo(() => {
+    return options;
+  }, [options]);
+
+  // Dynamically import SimpleMDE
+  useEffect(() => {
+    import("react-simplemde-editor").then((mod) => {
+      setSimpleMDE(() => mod.default);
+    });
+  }, []);
+
   return (
     <motion.div
       className="bg-[#2C2C2E] rounded-xl p-6 backdrop-blur-lg border border-[#3A3A3C]"
@@ -33,7 +55,7 @@ export default function NoteForm({ data, setData, submit, processing, handleKeyD
           />
         </div>
         <div className="mb-4">
-          <motion.textarea
+          {/* <motion.textarea
             whileFocus={{ scale: 1.01 }}
             transition={{ duration: 0.2 }}
             value={data.content}
@@ -42,8 +64,17 @@ export default function NoteForm({ data, setData, submit, processing, handleKeyD
             placeholder="Note content"
             className="w-full px-4 py-3 bg-[#3A3A3C] text-white placeholder-[#98989D] rounded-lg border-none focus:ring-2 focus:ring-[#0A84FF] focus:outline-none min-h-[120px] transition-all duration-200"
             required
-          />
+          /> */}
+          {SimpleMDE && (
+            <SimpleMDE
+              value={data.content}
+              onChange={(value) => setData("content", value)}
+              options={memoizedOptions}
+            />
+        )}
+
         </div>
+
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}

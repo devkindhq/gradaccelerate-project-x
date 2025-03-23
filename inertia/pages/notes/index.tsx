@@ -1,25 +1,21 @@
-import { Head, useForm, Link } from '@inertiajs/react'
+import { Head, useForm, Link, router } from '@inertiajs/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PlusIcon, XIcon, ArrowLeft } from 'lucide-react'
 import NoteCard from './note-card'
 import NoteForm from './note-form'
 import ViewSwitcher from './view-switcher'
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string | null;
-}
+import SortNotes from './sort-notes'
+import { NoteInterface, SortNotesInterface } from '#inertia/interfaces/note-interface'
 
 type ViewType = 'grid' | 'list'
 
-export default function Index({ notes: initialNotes }: { notes: Note[] }) {
+export default function Index({ notes: initialNotes }: { notes: NoteInterface[] }) {
   const [notes, setNotes] = useState(initialNotes)
   const [isFormVisible, setIsFormVisible] = useState(false)
   const [viewType, setViewType] = useState<ViewType>('grid')
+  const [sortNotes, setSortNotes] = useState<SortNotesInterface>({ sortBy: 'createdAt', sortOrder: 'desc' });
+
   const { data, setData, post, processing, reset } = useForm({
     title: '',
     content: ''
@@ -28,10 +24,11 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newNote: Note = {
+    const newNote: NoteInterface = {
       id: Date.now(),
       title: data.title,
       content: data.content,
+      pinned: false,
       createdAt: new Date().toISOString(),
       updatedAt: null
     }
@@ -51,6 +48,53 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
       submit(e as any);
     }
   };
+  
+
+  useEffect(() => {
+   router.get('/notes', { 
+      sortBy: sortNotes.sortBy, 
+      sortOrder: sortNotes.sortOrder 
+    }, { preserveState: true,  onSuccess: (page) => {
+
+      const fetchedNotes = page.props.notes as NoteInterface[];
+
+        // Sort so pinned notes always come first
+      const sortedNotes = [...fetchedNotes].sort((a, b) => {
+        if (a.pinned === b.pinned) {
+          return sortNotes.sortOrder === "asc"
+              ? a[sortNotes.sortBy] > b[sortNotes.sortBy]
+                ? 1
+                : -1
+              : a[sortNotes.sortBy] < b[sortNotes.sortBy]
+              ? 1
+              : -1;
+          }
+          return a.pinned ? -1 : 1; 
+        });
+
+        setNotes(sortedNotes);
+    } });
+
+  }, [sortNotes.sortBy, sortNotes.sortOrder]);
+  
+  const updatePinnedNote = (updatedNote: NoteInterface) => {
+    const updatedNotes = notes.map(note => 
+      note.id === updatedNote.id ? { ...note, pinned: updatedNote.pinned } : note
+    );
+  
+    // Sort so pinned notes always come first
+    const sortedNotes = [...updatedNotes].sort((a, b) => {
+      if (a.pinned === b.pinned) {
+        return sortNotes.sortOrder === 'asc'
+          ? a[sortNotes.sortBy] > b[sortNotes.sortBy] ? 1 : -1
+          : a[sortNotes.sortBy] < b[sortNotes.sortBy] ? 1 : -1;
+      }
+      return a.pinned ? -1 : 1;
+    });
+  
+    setNotes(sortedNotes);
+  };
+  
 
   return (
     <>
@@ -82,7 +126,8 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
               <h1 className="text-3xl font-bold">Notes</h1>
             </div>
             <div className="flex items-center gap-3">
-              <ViewSwitcher currentView={viewType} onChange={setViewType} />
+              <SortNotes currentSortValue={sortNotes} onChange={setSortNotes} />
+              <ViewSwitcher currentView={viewType} onChange={setViewType}  />
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsFormVisible(!isFormVisible)}
@@ -147,7 +192,7 @@ export default function Index({ notes: initialNotes }: { notes: Note[] }) {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className={viewType === 'list' ? 'w-full' : ''}
                 >
-                  <NoteCard note={note} viewType={viewType} />
+                  <NoteCard note={note} viewType={viewType} updatePinnedNote={updatePinnedNote} />
                 </motion.div>
               ))}
             </AnimatePresence>
