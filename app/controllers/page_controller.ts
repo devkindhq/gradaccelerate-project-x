@@ -8,7 +8,7 @@ export default class PageController {
     }
 
     public async todos({ inertia }: HttpContext) {
-        return inertia.render('todos/empty')
+        return inertia.render('todos/index')
     }
 
     // Notes pages

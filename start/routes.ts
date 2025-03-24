@@ -1,9 +1,8 @@
 const NotesController = () => import('#controllers/notes_controller')
 const ProjectsController = () => import('#controllers/projects_controller')
 const PageController = () => import('#controllers/page_controller')
+const TodosController = () => import('#controllers/todos_controller')
 import router from '@adonisjs/core/services/router'
-
-
 
 // Home and Misc pages
 router.get('/', [PageController, 'home'])
@@ -28,8 +27,17 @@ router.group(() => {
   router.delete('notes/:id', [NotesController, 'destroy'])
   router.patch('notes/:id/toggle-pin', [NotesController, 'togglePin'])
 }).prefix('/api')
-  
-  
+
+// Todos API
+router.group(() => {
+  router.get('todos', [TodosController, 'index'])
+  router.post('todos', [TodosController, 'store'])
+  router.get('todos/:id', [TodosController, 'show'])
+  router.put('todos/:id', [TodosController, 'update'])
+  router.delete('todos/:id', [TodosController, 'destroy'])
+}).prefix('/api')
+
+
 
 // Projects API
 router.group(() => {
