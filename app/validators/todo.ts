@@ -6,6 +6,7 @@ export const createTodoValidator = vine.compile(
         title: vine.string(),
         description: vine.string(),
         dueDate: vine.string().transform((value) => DateTime.fromISO(value)),
+        labels: vine.array(vine.string()).optional(),
     })
 )
 
@@ -14,10 +15,8 @@ export const updateTodoValidator = vine.compile(
         title: vine.string().optional(),
         description: vine.string().optional(),
         dueDate: vine.string().optional().transform((value) => ( value ? DateTime.fromISO(value) : undefined)),
-        isCompleted: vine.boolean().optional()
+        isCompleted: vine.boolean().optional(),
+        labels: vine.array(vine.string()).optional(),
     })
 )
 
-//"title": "Call mom",
-// "description": "Check in",
-// "dueDate": "2025-03-29T00:00:00.000+00:00",

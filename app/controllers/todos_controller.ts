@@ -8,8 +8,8 @@ export default class TodosController {
    */
   async index({request, inertia, response, logger}: HttpContext) {
     logger.info("todo get all items getting called")
-    const todos = await Todo.all();
-
+    const todos = await Todo.query().whereNull('deleted_at').exec();
+    
     return response.status(200).json({data: todos});
     // return inertia.render('todos/index', { todos });
   }

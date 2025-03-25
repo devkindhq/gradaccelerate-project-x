@@ -18,6 +18,18 @@ export default class Todo extends BaseModel {
   @column.dateTime()
   declare dueDate: DateTime
 
+   // Define labels as a column but use custom getter and setter
+  @column({
+    prepare: (value?: string[] | null) => (value ? JSON.stringify(value) : null),
+    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+  })
+  declare labels?: string[] | null;
+
+
+  set labels(value: string[] | null) {
+    this.$setAttribute('labels', value ? JSON.stringify(value) : null);
+  }
+  
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
@@ -42,4 +54,10 @@ export default class Todo extends BaseModel {
     this.deletedAt = now; // Update instance
     this.$isDeleted = true; // Mark as deleted
   }
+
+  // // Override the all method to exclude soft-deleted records
+  // public static async all() {
+  //   return this.query().whereNull('deleted_at').exec();
+  // }
+  
 }
