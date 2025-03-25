@@ -1,4 +1,5 @@
-import Project, { ProjectStatus } from '#models/project'
+import { ProjectStatus } from '#enums/project-enum'
+import Project from '#models/project'
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 
 export default class extends BaseSeeder {

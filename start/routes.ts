@@ -9,10 +9,16 @@
 
 const NotesController = () => import('#controllers/notes_controller')
 import ProjectsController from '#controllers/projects_controller'
+import TodosController from '#controllers/todos_controller'
 import router from '@adonisjs/core/services/router'
 
 router.get('/', ({ inertia }) => inertia.render('home'))
 router.get('/todos', ({ inertia }) => inertia.render('todos/empty'))
+
+router.get('/csrf-token', async ({ response, session }) => {
+  const csrfToken = await session.get('csrf-token');
+  return response.status(200).json({ token: csrfToken })
+})
 
 router.get('/notes', [NotesController, 'index'])
 router.post('/notes', [NotesController, 'store'])
@@ -27,4 +33,13 @@ router.group(() => {
   router.put('/:id', [ProjectsController, 'update'])
   router.delete('/:id', [ProjectsController, 'destroy'])
 }).prefix('/projects')
+
+
+router.group(() => {
+  router.get('/', [TodosController, 'index'])
+  router.post('/',  [TodosController, 'store'])
+  router.get('/:id', [TodosController, 'show'])
+  router.put('/:id', [TodosController, 'update'])
+  router.delete('/:id', [TodosController, 'destroy'])
+}).prefix('/todo')
 

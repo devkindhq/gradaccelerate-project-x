@@ -2,8 +2,6 @@ import { DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { ProjectStatus } from '#enums/project-enum'
 
-
-
 export default class Project extends BaseModel {
   @column({ isPrimary: true })
   declare id: number

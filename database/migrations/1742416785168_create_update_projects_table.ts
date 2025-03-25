@@ -1,4 +1,4 @@
-import { ProjectStatus } from '#models/project'
+import { ProjectStatus } from '#enums/project-enum'
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
