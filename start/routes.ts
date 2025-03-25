@@ -15,11 +15,6 @@ import router from '@adonisjs/core/services/router'
 router.get('/', ({ inertia }) => inertia.render('home'))
 router.get('/todos', ({ inertia }) => inertia.render('todos/empty'))
 
-router.get('/csrf-token', async ({ response, session }) => {
-  const csrfToken = await session.get('csrf-token');
-  return response.status(200).json({ token: csrfToken })
-})
-
 router.get('/notes', [NotesController, 'index'])
 router.post('/notes', [NotesController, 'store'])
 router.put('/notes/:id', [NotesController, 'update'])
