@@ -20,6 +20,7 @@ export default class extends BaseSeeder {
         title: 'Call mom',
         description: 'Check in',
         dueDate: '2025-03-29 00:00:00',
+        labels: ['personal', 'urgent'],
       },
     ])
   }

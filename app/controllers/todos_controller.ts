@@ -2,6 +2,9 @@ import Todo from '#models/todo'
 import { createTodoValidator, updateTodoValidator } from '#validators/todo';
 import type { HttpContext } from '@adonisjs/core/http'
 
+
+
+
 export default class TodosController {
   /**
    * Display a list of resource
@@ -61,4 +64,5 @@ export default class TodosController {
     await todo.delete() // Sets deletedAt
     return response.json({ message: 'Todo soft deleted', data: todo });
   }
+
 }

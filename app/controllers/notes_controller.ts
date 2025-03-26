@@ -1,5 +1,8 @@
 import { HttpContext } from '@adonisjs/core/http'
 import Note from '#models/note'
+import cloudinary from '#config/cloudinary';
+import Todo from '#models/todo';
+import { ImageValidator } from '#validators/note';
 
 export default class NotesController {
   /**
@@ -36,7 +39,7 @@ export default class NotesController {
    * Store a new note
    */
   async store({ request, response }: HttpContext) {
-    const data = request.only(['title', 'content', 'pinned'])
+    const data = request.only(['title', 'content', 'pinned', 'imageUrl', "labels"])
     await Note.create(data)
     return response.redirect().back()
   }
@@ -50,7 +53,7 @@ export default class NotesController {
       return response.notFound({ message: 'Note not found' })
     }
 
-    const data = request.only(['title', 'content', 'pinned']); 
+    const data = request.only(['title', 'content', 'pinned', 'imageUrl', "labels"]); 
     await note.merge(data).save()
     return response.redirect().back();
   }
@@ -67,4 +70,23 @@ export default class NotesController {
     await note.delete()
     return response.redirect().back()
   }
+  
+  /**
+   * Upload an image
+  */
+  async upload({ request, response }: HttpContext) {
+    const payload = await request.validateUsing(ImageValidator)
+  
+    if (!payload.image) {
+      return response.badRequest({ error: 'No image file provided' })
+    }
+  
+    // ✅ Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(payload.image.tmpPath!, {
+      folder: 'adonis_uploads',
+    })
+  
+    return response.ok({ message: 'Image uploaded successfully', imageUrl: result.secure_url })
+  }
+
 } 

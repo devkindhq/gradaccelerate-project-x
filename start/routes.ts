@@ -19,6 +19,7 @@ router.get('/notes', [NotesController, 'index'])
 router.post('/notes', [NotesController, 'store'])
 router.put('/notes/:id', [NotesController, 'update'])
 router.delete('/notes/:id', [NotesController, 'destroy'])
+router.post('/notes/upload', [NotesController, 'upload'])
 
 
 router.group(() => {
