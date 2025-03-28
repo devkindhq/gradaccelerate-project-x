@@ -1,5 +1,9 @@
 import { HttpContext } from '@adonisjs/core/http'
 import Note from '#models/note'
+import fs from 'fs'
+import path from 'path'
+import Cloudinary from '#config/cloudinary'
+
 
 // Simpler approach for markdown - avoid async import which might cause issues
 let marked: any
@@ -172,4 +176,52 @@ export default class NotesController {
       })
     }
   }
+
+
+
+  
+    public async uploadImage({ request, response }: HttpContext) {
+      try {
+        const imageFile = request.file('image', {
+          size: '5mb', // Limit file size
+          extnames: ['jpg', 'png', 'jpeg', 'gif'], // Allow only specific formats
+        })
+  
+        if (!imageFile) {
+          return response.badRequest({ error: 'No file uploaded' })
+        }
+  
+        // Move file temporarily
+        const tmpFilePath = path.join(__dirname, '..', '..', 'tmp', imageFile.clientName)
+        await imageFile.move(tmpFilePath)
+  
+        // Upload to Cloudinary
+        const uploadResponse = await Cloudinary.uploader.upload(tmpFilePath, {
+          folder: 'notes_uploads', // Store images in a specific folder
+          resource_type: 'image',
+        })
+  
+        // Delete temp file after upload
+        fs.unlinkSync(tmpFilePath)
+  
+        return response.ok({ message: 'Image uploaded successfully!', url: uploadResponse.secure_url })
+      } catch (error) {
+        console.error('Image Upload Error:', error)
+        return response.internalServerError({ error: 'Failed to upload image' })
+      }
+    }
+
+    public async saveNoteWithImage({ request, response }: HttpContext) {
+      const { title, content, imageUrl } = request.only(['title', 'content', 'imageUrl'])
+    
+      const note = await Note.create({
+        title,
+        content,
+        imageUrl,
+      
+      })
+    
+      return response.created({ message: 'Note saved successfully!', note })
+    }
+
 }

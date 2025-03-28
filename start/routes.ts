@@ -2,6 +2,10 @@ const NotesController = () => import('#controllers/notes_controller')
 const ProjectsController = () => import('#controllers/projects_controller')
 const PageController = () => import('#controllers/page_controller')
 const TodosController = () => import('#controllers/todos_controller')
+// import NotesController from '#controllers/notes_controller'
+// import TodosController from '#controllers/todos_controller'
+// import ProjectsController from '#controllers/projects_controller'
+  
 import router from '@adonisjs/core/services/router'
 
 // Home and Misc pages
@@ -47,5 +51,6 @@ router.group(() => {
   router.put('projects/:id', [ProjectsController, 'update'])    
   router.delete('projects/:id', [ProjectsController, 'destroy'])
 }).prefix('/api')
+
 
 
