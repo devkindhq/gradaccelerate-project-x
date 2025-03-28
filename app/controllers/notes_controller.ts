@@ -119,7 +119,8 @@ export default class NotesController {
         return response.status(404).json({ message: 'Note not found' })
       }
       
-      const data = request.only(['title', 'content', 'pinned'])
+      // Add imageUrl to the fields we accept from the request
+      const data = request.only(['title', 'content', 'pinned', 'imageUrl'])
       note.merge(data)
       await note.save()
       
