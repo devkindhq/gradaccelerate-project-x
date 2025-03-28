@@ -1,7 +1,7 @@
 import { HttpContext } from '@adonisjs/core/http'
 import Note from '#models/note'
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 import Cloudinary from '#config/cloudinary'
 
 // Simpler approach for markdown - avoid async import which might cause issues
@@ -178,45 +178,99 @@ export default class NotesController {
 
   public async uploadImage({ request, response }: HttpContext) {
     try {
+      // Create upload directory in project if it doesn't exist
+      const uploadDir = path.join(process.cwd(), 'tmp', 'uploads')
+      
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true })
+      }
+      
+      // Use project's tmp directory instead of system temp dir
       const imageFile = request.file('image', {
-        size: '5mb', // Limit file size
-        extnames: ['jpg', 'png', 'jpeg', 'gif'], // Allow only specific formats
+        size: '10mb',
+        extnames: ['jpg', 'png', 'jpeg', 'gif'],
       })
-
+      
       if (!imageFile) {
         return response.badRequest({ error: 'No file uploaded' })
       }
-
-      // Move file temporarily
-      const tmpFilePath = path.join(__dirname, '..', '..', 'tmp', imageFile.clientName)
-      await imageFile.move(tmpFilePath)
-
-      // Upload to Cloudinary
-      const uploadResponse = await Cloudinary.uploader.upload(tmpFilePath, {
-        folder: 'notes_uploads', // Store images in a specific folder
-        resource_type: 'image',
-      })
-
-      // Delete temp file after upload
-      fs.unlinkSync(tmpFilePath)
-
-      return response.ok({ message: 'Image uploaded successfully!', url: uploadResponse.secure_url })
+      
+      try {
+        // Use a simple random filename in the project directory
+        const uniqueId = Date.now().toString()
+        const fileExt = imageFile.extname || 'png'
+        const filename = `upload_${uniqueId}.${fileExt}`
+        const filePath = path.join(uploadDir, filename)
+        
+        // Let AdonisJS handle the file move operation
+        await imageFile.move(uploadDir, {
+          name: filename,
+          overwrite: true
+        })
+        
+        // Verify the file exists and has content
+        if (!fs.existsSync(filePath)) {
+          return response.internalServerError({ error: 'Failed to save uploaded file' })
+        }
+        
+        const stats = fs.statSync(filePath)
+        
+        if (stats.size === 0) {
+          return response.badRequest({ error: 'Uploaded file is empty' })
+        }
+        
+        // Upload to Cloudinary
+        const cloudinaryResult = await Cloudinary.uploader.upload(filePath, {
+          folder: 'notes_uploads',
+          resource_type: 'auto'
+        })
+        
+        // Clean up the file after successful upload
+        try {
+          fs.unlinkSync(filePath)
+        } catch (cleanupError) {
+          // Non-critical error, we can continue
+        }
+        
+        return response.ok({
+          message: 'Image uploaded successfully!',
+          url: cloudinaryResult.secure_url
+        })
+      } catch (uploadError) {
+        return response.internalServerError({
+          error: 'Failed to process the image upload',
+          details: String(uploadError)
+        })
+      }
     } catch (error) {
-      console.error('Image Upload Error:', error)
-      return response.internalServerError({ error: 'Failed to upload image' })
+      return response.internalServerError({
+        error: 'Failed to handle image upload request',
+        details: String(error)
+      })
     }
   }
 
   public async saveNoteWithImage({ request, response }: HttpContext) {
-    const { title, content, imageUrl } = request.only(['title', 'content', 'imageUrl'])
-  
-    const note = await Note.create({
-      title,
-      content,
-      imageUrl,
+    try {
+      const { title, content, imageUrl, pinned = false } = request.only(['title', 'content', 'imageUrl', 'pinned'])
       
-    })
-  
-    return response.created({ message: 'Note saved successfully!', note })
+      if (!title || !content) {
+        return response.badRequest({ error: 'Title and content are required' })
+      }
+      
+      const note = await Note.create({
+        title,
+        content,
+        imageUrl: imageUrl || null,
+        pinned: Boolean(pinned)
+      })
+      
+      return response.created({ message: 'Note with image saved successfully!', note })
+    } catch (error) {
+      return response.internalServerError({ 
+        error: 'Failed to save note with image',
+        details: error.message
+      })
+    }
   }
 }

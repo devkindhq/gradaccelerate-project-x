@@ -14,6 +14,7 @@ interface Note {
   createdAt: string
   updatedAt: string | null
   pinned: boolean
+  imageUrl?: string
 }
 
 export default function NotesPage() {
@@ -23,8 +24,9 @@ export default function NotesPage() {
   const [viewType, setViewType] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState<string>('created_at')
   const [order, setOrder] = useState<string>('desc')
-  const [formData, setFormData] = useState({ title: '', content: '', pinned: false })
+  const [formData, setFormData] = useState({ title: '', content: '', pinned: false, imageUrl: '' })
   const [processing, setProcessing] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
@@ -55,6 +57,29 @@ export default function NotesPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  // Handle image upload
+  const handleImageUpload = async (file: File): Promise<string> => {
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+      
+      const response = await axios.post('/notes/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      return response.data.url
+    } catch (err) {
+      console.error('Error uploading image:', err)
+      setError('Failed to upload image. Please try again.')
+      throw err
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   // Handle form submission - creates new note or updates existing one
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,8 +91,12 @@ export default function NotesPage() {
         // Update existing note
         await axios.put(`/api/notes/${editingNoteId}`, formData)
         resetForm()
+      } else if (formData.imageUrl) {
+        // Create new note with image
+        await axios.post('/notes/save-with-image', formData)
+        resetForm()
       } else {
-        // Create new note
+        // Create new note without image
         await axios.post('/api/notes', formData)
         resetForm()
       }
@@ -82,7 +111,7 @@ export default function NotesPage() {
 
   // Reset form and editing state
   const resetForm = () => {
-    setFormData({ title: '', content: '', pinned: false })
+    setFormData({ title: '', content: '', pinned: false, imageUrl: '' })
     setIsEditing(false)
     setEditingNoteId(null)
   }
@@ -122,7 +151,8 @@ export default function NotesPage() {
     setFormData({
       title: note.title,
       content: note.content,
-      pinned: note.pinned
+      pinned: note.pinned,
+      imageUrl: note.imageUrl || ''
     })
     setIsEditing(true)
     setEditingNoteId(note.id)
@@ -236,6 +266,8 @@ export default function NotesPage() {
                   handleKeyDown={handleKeyDown}
                   isEditing={isEditing}
                   cancelEdit={isEditing ? resetForm : undefined}
+                  uploadImage={handleImageUpload}
+                  uploadingImage={uploadingImage}
                 />
               </motion.div>
             )}

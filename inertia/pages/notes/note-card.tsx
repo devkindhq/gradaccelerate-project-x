@@ -8,6 +8,7 @@ interface Note {
   createdAt: string;
   updatedAt: string | null;
   pinned: boolean;
+  imageUrl?: string;
 }
 
 interface NoteCardProps {
@@ -50,14 +51,28 @@ export default function NoteCard({ note, viewType, onDelete, onEdit, onTogglePin
             </div>
             <span className="text-xs text-[#98989D]">{timeAgo}</span>
           </div>
+          
+          {/* Display image if available */}
+          {note.imageUrl && (
+            <div className="mb-3">
+              <img 
+                src={note.imageUrl} 
+                alt={note.title} 
+                className={`rounded-lg object-cover ${
+                  viewType === 'grid' 
+                    ? 'max-h-32 w-full' 
+                    : 'h-16 w-24 object-cover'
+                }`}
+              />
+            </div>
+          )}
+          
           <p className={`text-[#98989D] text-sm ${viewType === 'grid' ? 'line-clamp-3' : 'line-clamp-1'}`}>
             {note.content}
           </p>
         </div>
       </div>
 
-      
-      
       {/* Action buttons */}
       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button 
@@ -97,9 +112,7 @@ export default function NoteCard({ note, viewType, onDelete, onEdit, onTogglePin
             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
         </button>
-        
       </div>
-      
       
       {viewType === 'grid' && (
         <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#2C2C2E] to-transparent" />

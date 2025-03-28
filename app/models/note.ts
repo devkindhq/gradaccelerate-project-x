@@ -14,8 +14,8 @@ export default class Note extends BaseModel {
   @column()
   declare pinned: boolean
 
-  @column()
-  declare imageUrl: string // Store CDN image URL
+  @column({ columnName: 'image_url' })
+  declare imageUrl: string | null
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

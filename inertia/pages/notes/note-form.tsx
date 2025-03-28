@@ -1,6 +1,7 @@
 import type React from "react"
 import { motion } from "framer-motion"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
+import { ImageIcon, X, Upload } from "lucide-react"
 
 interface NoteFormProps {
   data: {
@@ -8,6 +9,7 @@ interface NoteFormProps {
     title: string;
     content: string;
     pinned?: boolean;
+    imageUrl?: string;
   }
   setData: (field: string, value: string | boolean) => void
   submit: (e: React.FormEvent) => void
@@ -15,6 +17,8 @@ interface NoteFormProps {
   handleKeyDown: (e: React.KeyboardEvent) => void
   isEditing: boolean
   cancelEdit?: () => void
+  uploadImage?: (file: File) => Promise<string>
+  uploadingImage?: boolean
 }
 
 export default function NoteForm({ 
@@ -24,14 +28,64 @@ export default function NoteForm({
   processing, 
   handleKeyDown, 
   isEditing,
-  cancelEdit
+  cancelEdit,
+  uploadImage,
+  uploadingImage = false
 }: NoteFormProps) {
   const [isMac, setIsMac] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Safely check for navigator after component mounts (client-side only)
   useEffect(() => {
     setIsMac(typeof navigator !== 'undefined' && navigator.platform?.includes('Mac'))
   }, [])
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0] && uploadImage) {
+      await handleFileUpload(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleFileUpload = async (file: File) => {
+    if (!uploadImage) return
+    
+    try {
+      const imageUrl = await uploadImage(file)
+      setData("imageUrl", imageUrl)
+    } catch (error) {
+      console.error("Error uploading image:", error)
+    }
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && uploadImage) {
+      await handleFileUpload(e.target.files[0])
+    }
+  }
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click()
+  }
+
+  const removeImage = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setData("imageUrl", "")
+  }
   
   return (
     <motion.div
@@ -69,6 +123,55 @@ export default function NoteForm({
             required
           />
         </div>
+
+        {/* Image upload area */}
+        <div 
+          className={`mb-4 border-2 border-dashed rounded-lg transition-colors ${
+            dragActive ? "border-[#0A84FF] bg-[#0A84FF]/10" : "border-[#3A3A3C]"
+          } p-4 text-center cursor-pointer`}
+          onClick={triggerFileInput}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+          
+          {uploadingImage ? (
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#0A84FF] mb-2"></div>
+              <p className="text-[#98989D] text-sm">Uploading image...</p>
+            </div>
+          ) : data.imageUrl ? (
+            <div className="relative">
+              <img 
+                src={data.imageUrl} 
+                alt="Note image" 
+                className="max-h-48 mx-auto rounded-lg object-contain"
+              />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute top-2 right-2 bg-[#1A1A1C]/80 text-white p-1 rounded-full hover:bg-red-500 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-4">
+              <Upload size={24} className="text-[#98989D] mb-2" />
+              <p className="text-[#98989D] text-sm">Drag & drop an image or click to upload</p>
+              <p className="text-[#98989D] text-xs mt-1">Supports JPG, PNG, GIF (max 5MB)</p>
+            </div>
+          )}
+        </div>
+
         {isEditing && (
           <div className="mb-4 flex items-center">
             <label className="flex items-center cursor-pointer">
@@ -90,7 +193,7 @@ export default function NoteForm({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
-            disabled={processing}
+            disabled={processing || uploadingImage}
             className="w-full bg-[#0A84FF] text-white px-4 py-3 rounded-lg hover:bg-[#0A74FF] focus:outline-none focus:ring-2 focus:ring-[#0A84FF] focus:ring-offset-2 focus:ring-offset-[#2C2C2E] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
             {processing 
