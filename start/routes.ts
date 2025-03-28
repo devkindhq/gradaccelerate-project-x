@@ -2,9 +2,7 @@ const NotesController = () => import('#controllers/notes_controller')
 const ProjectsController = () => import('#controllers/projects_controller')
 const PageController = () => import('#controllers/page_controller')
 const TodosController = () => import('#controllers/todos_controller')
-// import NotesController from '#controllers/notes_controller'
-// import TodosController from '#controllers/todos_controller'
-// import ProjectsController from '#controllers/projects_controller'
+
   
 import router from '@adonisjs/core/services/router'
 
@@ -14,7 +12,8 @@ router.get('/todos', [PageController, 'todos'])
 
 // Notes UI Pages
 router.get('/notes', [PageController, 'notesIndex'])
-
+router.post('/notes/upload', [NotesController, 'uploadImage'])
+router.post('/notes/save-with-image', [NotesController, 'saveNoteWithImage']) // New route for saving notes with images
 // Projects UI Pages
 router.get('/projects', [PageController, 'projectsIndex'])
 router.get('/projects/create', [PageController, 'projectsCreate'])
@@ -40,8 +39,6 @@ router.group(() => {
   router.put('todos/:id', [TodosController, 'update'])
   router.delete('todos/:id', [TodosController, 'destroy'])
 }).prefix('/api')
-
-
 
 // Projects API
 router.group(() => {
